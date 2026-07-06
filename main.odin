@@ -73,6 +73,7 @@ main :: proc() {
 				foul_foods       = {},
 				foul_apples      = 0,
 				gate_extra       = 0,
+				paused           = false,
 			}
 				tilemap = load_tilemap(LEVELS[0].file)
 				tilemap_loaded = true
@@ -82,6 +83,10 @@ main :: proc() {
 
 		case Playing:
 			playing := &state.(Playing)
+			if raylib.IsKeyPressed(.ESCAPE) || raylib.IsKeyPressed(.P) || gp_button_pressed(.MIDDLE_LEFT, 0) || joy_button_pressed(7) {
+				playing.paused = !playing.paused
+			}
+			if !playing.paused {
 			for i := len(playing.foul_foods) - 1; i >= 0; i -= 1 {
 				playing.foul_foods[i].timer -= dt
 				if playing.foul_foods[i].timer <= 0 {
@@ -113,9 +118,10 @@ main :: proc() {
 				move_timer += dt
 				if move_timer >= move_delay {
 					update(&snake, &food, playing, &state, &assets, &tilemap, false)
-					move_timer = 0
-				}
+		move_timer = 0
 			}
+		}
+		}
 
 		case GameOver:
 			if raylib.IsKeyPressed(.SPACE) || raylib.IsKeyPressed(.ENTER) || controller_confirm() {
@@ -230,6 +236,15 @@ main :: proc() {
 			raylib.EndMode2D()
 			if s.countdown > 0 {
 				draw_countdown(s.countdown)
+			}
+			if playing.paused {
+				raylib.DrawRectangle(0, HUD_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, raylib.Color{0, 0, 0, 120})
+				fs1 := CELL_SIZE * 2
+				tw1 := raylib.MeasureText("PAUSED", c.int(fs1))
+				raylib.DrawText("PAUSED", c.int((SCREEN_WIDTH - tw1) / 2), c.int(HUD_HEIGHT + (SCREEN_HEIGHT - fs1) / 2 - CELL_SIZE), c.int(fs1), raylib.RAYWHITE)
+				fs2 := CELL_SIZE / 2
+				tw2 := raylib.MeasureText("Press ESC or P to resume", c.int(fs2))
+				raylib.DrawText("Press ESC or P to resume", c.int((SCREEN_WIDTH - tw2) / 2), c.int(HUD_HEIGHT + (SCREEN_HEIGHT - fs2) / 2 + CELL_SIZE), c.int(fs2), raylib.Color{200, 200, 200, 255})
 			}
 
 		case GameOver:

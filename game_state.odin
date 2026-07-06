@@ -22,6 +22,7 @@ Playing :: struct {
 	foul_foods:       [dynamic]FoulFood,
 	foul_apples:      int,
 	gate_extra:       int,
+	paused:           bool,
 }
 
 GameOver :: struct {
