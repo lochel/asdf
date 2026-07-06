@@ -18,7 +18,7 @@ main :: proc() {
 	raylib.SetConfigFlags({.VSYNC_HINT})
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
-	raylib.SetTargetFPS(60)
+	raylib.SetTargetFPS(600)
 	defer raylib.CloseWindow()
 
 	raylib.InitAudioDevice()
