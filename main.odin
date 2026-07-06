@@ -18,6 +18,7 @@ main :: proc() {
 	raylib.SetConfigFlags({.VSYNC_HINT})
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
+	raylib.SetExitKey(.KEY_NULL)
 	raylib.SetTargetFPS(600)
 	defer raylib.CloseWindow()
 
