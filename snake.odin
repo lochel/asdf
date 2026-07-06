@@ -109,6 +109,7 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 	}
 
 	if !npcs_only {
+	    input_used = false
 	snake.direction = snake.next_direction
 
 	head := snake.body[len(snake.body) - 1]
@@ -175,7 +176,8 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 		raylib.PlaySound(assets^.sounds.eat)
 
 		if !playing.gate_open {
-			playing.gate_open = playing.score >= LEVELS[playing.current_level].gate_score
+			gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
+			playing.gate_open = playing.score >= gate_threshold
 			if playing.gate_open {
 				food^ = {-1, -1}
 				raylib.PlaySound(assets^.sounds.eat)
@@ -198,7 +200,9 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 			if tm.has_start {
 				tm.tiles[tm.start_pos.y][tm.start_pos.x] = .Grass
 			}
-			spawn_food(snake, food, tm^, playing)
+			if !playing.gate_open {
+				spawn_food(snake, food, tm^, playing)
+			}
 		}
 	}
 
@@ -316,6 +320,7 @@ player_died :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameS
 
 	clear(&playing.foul_foods)
 	playing.foul_apples = 0
+	input_used = false
 
 	clear(&snake.body)
 	clear(&snake.head_dirs)
@@ -335,6 +340,10 @@ player_died :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameS
 	food^ = {-1, -1}
 
 	playing.gate_open = playing.score >= LEVELS[playing.current_level].gate_score
+	if playing.gate_open {
+		playing.gate_extra += 1
+	}
+	playing.gate_open = playing.score >= LEVELS[playing.current_level].gate_score + playing.gate_extra
 }
 
 advance_level :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState, assets: ^Assets, tm: ^Tilemap) {
@@ -387,6 +396,7 @@ advance_level :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^Gam
 	playing.foul_apples = 0
 
 	playing.gate_open = false
+	playing.gate_extra = 0
 
 	playing.lives = min(playing.lives + 1, 3)
 
@@ -809,9 +819,10 @@ draw_hud :: proc(playing: Playing) {
 	sq := c.int(28)
 	sp := sq + 6
 
+	gate_total := level.gate_score + playing.gate_extra
 	gate_w: c.int = 0
 	if !playing.gate_open {
-		gate_w = c.int(level.gate_score) * sp - 6
+		gate_w = c.int(gate_total) * sp - 6
 	}
 
 	lives_w: c.int = c.int(playing.lives) * 32
@@ -822,7 +833,7 @@ draw_hud :: proc(playing: Playing) {
 		right -= gate_w
 		x_g := right
 
-		for i in 0 ..< level.gate_score {
+		for i in 0 ..< gate_total {
 			sx := x_g + c.int(i) * sp
 			sy := y + 10
 
@@ -906,6 +917,14 @@ draw_countdown :: proc(timer: f32) {
 	fsize: c.int = CELL_SIZE * 4
 	tw := raylib.MeasureText(text, fsize)
 	raylib.DrawText(text, (SCREEN_WIDTH - tw) / 2, WINDOW_HEIGHT / 2 - fsize, fsize, raylib.Color{255, 255, 100, 255})
+}
+
+draw_debug_overlay :: proc(frame_count: u64) {
+	fps := raylib.GetFPS()
+	x: c.int = 10
+	y: c.int = WINDOW_HEIGHT - 40
+	text := raylib.TextFormat("FPS: %d  Frame: %d", fps, frame_count)
+	raylib.DrawText(text, x, y, 20, raylib.Color{255, 255, 255, 200})
 }
 
 draw_game_over :: proc(score: int) {

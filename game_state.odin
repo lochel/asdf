@@ -21,6 +21,7 @@ Playing :: struct {
 	spawning_delayed: bool,
 	foul_foods:       [dynamic]FoulFood,
 	foul_apples:      int,
+	gate_extra:       int,
 }
 
 GameOver :: struct {

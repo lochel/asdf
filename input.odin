@@ -7,6 +7,8 @@ GAMEPAD_DEADZONE :: 0.5
 
 @(private)
 prev_axis_up, prev_axis_down, prev_axis_left, prev_axis_right: bool
+@(private)
+input_used: bool
 
 gp_button_pressed :: proc(btn: raylib.GamepadButton, gamepad: c.int = 0) -> bool {
 	return raylib.IsGamepadAvailable(gamepad) && raylib.IsGamepadButtonPressed(gamepad, btn)
@@ -29,6 +31,7 @@ apply_dir :: proc(snake: ^Snake, dir: Direction) {
 
 handle_input :: proc(snake: ^Snake, state: GameState) {
 	if _, ok := state.(Playing); !ok do return
+	if input_used do return
 
 	last: Maybe(Direction)
 
@@ -97,5 +100,6 @@ handle_input :: proc(snake: ^Snake, state: GameState) {
 
 	if last != nil {
 		apply_dir(snake, last.?)
+		input_used = true
 	}
 }

@@ -48,6 +48,7 @@ main :: proc() {
 	state: GameState = Menu{}
 	move_timer: f32 = 0
 	move_delay: f32 = 0.25
+	frame_count: u64 = 0
 
 	tilemap_loaded := false
 	tilemap: Tilemap
@@ -69,9 +70,10 @@ main :: proc() {
 					splits_triggered = {},
 					countdown        = 4.0,
 					spawning         = 2,
-					foul_foods       = {},
-					foul_apples      = 0,
-				}
+				foul_foods       = {},
+				foul_apples      = 0,
+				gate_extra       = 0,
+			}
 				tilemap = load_tilemap(LEVELS[0].file)
 				tilemap_loaded = true
 				init_game(&snake, &food, &tilemap)
@@ -125,6 +127,8 @@ main :: proc() {
 			}
 		}
 
+		frame_count += 1
+
 		raylib.BeginDrawing()
 
 		camera := raylib.Camera2D {
@@ -174,7 +178,8 @@ main :: proc() {
 		case Playing:
 			draw_hud(s)
 			raylib.BeginMode2D(camera)
-			remaining := max(0, LEVELS[s.current_level].gate_score - s.score)
+			gate_threshold := LEVELS[s.current_level].gate_score + s.gate_extra
+			remaining := max(0, gate_threshold - s.score)
 			draw_background(tilemap, assets, remaining)
 			draw_food(food, assets)
 			for ff in s.foul_foods {
@@ -202,6 +207,7 @@ main :: proc() {
 			draw_game_over(s.final_score)
 		}
 
+		draw_debug_overlay(frame_count)
 		raylib.EndDrawing()
 		save_joy_button_state()
 	}
