@@ -451,19 +451,6 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets
 		append(&npc_dirs, snake.head_dirs[i])
 	}
 
-	tail_dir := snake.head_dirs[0]
-	opposite_dir := tail_dir
-	switch opposite_dir {
-	case .Up:
-		opposite_dir = .Down
-	case .Down:
-		opposite_dir = .Up
-	case .Left:
-		opposite_dir = .Right
-	case .Right:
-		opposite_dir = .Left
-	}
-
 	new_body := make([dynamic]Vec2)
 	new_dirs := make([dynamic]Direction)
 	for i in mid ..< len(snake.body) {
@@ -481,7 +468,7 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets
 	npc := NpcSnake {
 		body      = npc_body,
 		head_dirs = npc_dirs,
-		direction = opposite_dir,
+		direction = npc_dirs[len(npc_dirs) - 1],
 		stun      = 3,
 	}
 	append(&playing.npc_snakes, npc)
