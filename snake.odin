@@ -84,7 +84,15 @@ draw_grid :: proc() {
 	}
 }
 
-update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState, assets: ^Assets, tm: ^Tilemap, npcs_only: bool) {
+update :: proc(
+	snake: ^Snake,
+	food: ^Food,
+	playing: ^Playing,
+	state: ^GameState,
+	assets: ^Assets,
+	tm: ^Tilemap,
+	npcs_only: bool,
+) {
 	// Delayed spawning: wait until no NPC is within 3 tiles of start
 	if playing.spawning_delayed && playing.spawning == 0 && !npcs_only {
 		start := tm.start_pos
@@ -99,112 +107,112 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 					break
 				}
 			}
-			if !can_spawn { break }
+			if !can_spawn {break}
 		}
 		if can_spawn {
-	playing.spawning = 0
-	playing.spawning_delayed = true
+			playing.spawning = 0
+			playing.spawning_delayed = true
 			playing.spawning_delayed = false
 		}
 	}
 
 	if !npcs_only {
-	    input_used = false
-	snake.direction = snake.next_direction
+		input_used = false
+		snake.direction = snake.next_direction
 
-	head := snake.body[len(snake.body) - 1]
-	new_head := head
+		head := snake.body[len(snake.body) - 1]
+		new_head := head
 
-	switch snake.direction {
-	case .Up:
-		new_head.y -= 1
-	case .Down:
-		new_head.y += 1
-	case .Left:
-		new_head.x -= 1
-	case .Right:
-		new_head.x += 1
-	}
-
-	if new_head.x < 0 do new_head.x = GRID_WIDTH - 1
-	if new_head.x >= GRID_WIDTH do new_head.x = 0
-	if new_head.y < 0 do new_head.y = GRID_HEIGHT - 1
-	if new_head.y >= GRID_HEIGHT do new_head.y = 0
-
-	if is_wall(tm^, new_head) {
-		player_died(snake, food, playing, state, assets, tm)
-		return
-	}
-
-	if is_gate(tm^, new_head) && !playing.gate_open {
-		player_died(snake, food, playing, state, assets, tm)
-		return
-	}
-
-	if is_gate(tm^, new_head) && playing.gate_open {
-		advance_level(snake, food, playing, state, assets, tm)
-		return
-	}
-
-	if is_puddle(tm^, new_head) {
-		if tp, ok := teleport(tm^, new_head); ok {
-			new_head = tp
+		switch snake.direction {
+		case .Up:
+			new_head.y -= 1
+		case .Down:
+			new_head.y += 1
+		case .Left:
+			new_head.x -= 1
+		case .Right:
+			new_head.x += 1
 		}
-	}
 
-	for seg in snake.body {
-		if seg == new_head {
+		if new_head.x < 0 do new_head.x = GRID_WIDTH - 1
+		if new_head.x >= GRID_WIDTH do new_head.x = 0
+		if new_head.y < 0 do new_head.y = GRID_HEIGHT - 1
+		if new_head.y >= GRID_HEIGHT do new_head.y = 0
+
+		if is_wall(tm^, new_head) {
 			player_died(snake, food, playing, state, assets, tm)
 			return
 		}
-	}
 
-	snake.head_dirs[len(snake.head_dirs) - 1] = snake.direction
-	append(&snake.body, new_head)
-	append(&snake.head_dirs, snake.direction)
-
-	for i in 0 ..< len(playing.foul_foods) {
-		if new_head == playing.foul_foods[i].pos {
-			unordered_remove(&playing.foul_foods, i)
+		if is_gate(tm^, new_head) && !playing.gate_open {
 			player_died(snake, food, playing, state, assets, tm)
 			return
 		}
-	}
 
-	if new_head == food^ {
-		playing.score += 1
-		raylib.PlaySound(assets^.sounds.eat)
+		if is_gate(tm^, new_head) && playing.gate_open {
+			advance_level(snake, food, playing, state, assets, tm)
+			return
+		}
 
-		if !playing.gate_open {
-			gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
-			playing.gate_open = playing.score >= gate_threshold
-			if playing.gate_open {
-				food^ = {-1, -1}
-				raylib.PlaySound(assets^.sounds.eat)
-			} else {
-				spawn_food(snake, food, tm^, playing)
+		if is_puddle(tm^, new_head) {
+			if tp, ok := teleport(tm^, new_head); ok {
+				new_head = tp
 			}
 		}
 
-		check_split(snake, playing)
-	} else if playing.spawning == 0 {
-		for i in 0 ..< len(snake.body) - 1 {
-			snake.body[i] = snake.body[i + 1]
-			snake.head_dirs[i] = snake.head_dirs[i + 1]
-		}
-		pop(&snake.body)
-		pop(&snake.head_dirs)
-	} else {
-		playing.spawning -= 1
-		if playing.spawning == 0 {
-			if tm.has_start {
-				tm.tiles[tm.start_pos.y][tm.start_pos.x] = .Grass
+		for seg in snake.body {
+			if seg == new_head {
+				player_died(snake, food, playing, state, assets, tm)
+				return
 			}
+		}
+
+		snake.head_dirs[len(snake.head_dirs) - 1] = snake.direction
+		append(&snake.body, new_head)
+		append(&snake.head_dirs, snake.direction)
+
+		for i in 0 ..< len(playing.foul_foods) {
+			if new_head == playing.foul_foods[i].pos {
+				unordered_remove(&playing.foul_foods, i)
+				player_died(snake, food, playing, state, assets, tm)
+				return
+			}
+		}
+
+		if new_head == food^ {
+			playing.score += 1
+			raylib.PlaySound(assets^.sounds.eat)
+
 			if !playing.gate_open {
-				spawn_food(snake, food, tm^, playing)
+				gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
+				playing.gate_open = playing.score >= gate_threshold
+				if playing.gate_open {
+					food^ = {-1, -1}
+					raylib.PlaySound(assets^.sounds.eat)
+				} else {
+					spawn_food(snake, food, tm^, playing)
+				}
+			}
+
+			check_split(snake, playing)
+		} else if playing.spawning == 0 {
+			for i in 0 ..< len(snake.body) - 1 {
+				snake.body[i] = snake.body[i + 1]
+				snake.head_dirs[i] = snake.head_dirs[i + 1]
+			}
+			pop(&snake.body)
+			pop(&snake.head_dirs)
+		} else {
+			playing.spawning -= 1
+			if playing.spawning == 0 {
+				if tm.has_start {
+					tm.tiles[tm.start_pos.y][tm.start_pos.x] = .Grass
+				}
+				if !playing.gate_open {
+					spawn_food(snake, food, tm^, playing)
+				}
 			}
 		}
-	}
 
 	}
 
@@ -212,7 +220,14 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 		i := 0
 		for i < len(playing.npc_snakes) {
 			player_head := snake.body[len(snake.body) - 1]
-			alive, ate := move_npc(&playing.npc_snakes[i], food^, snake, playing, playing.gate_open, tm^)
+			alive, ate := move_npc(
+				&playing.npc_snakes[i],
+				food^,
+				snake,
+				playing,
+				playing.gate_open,
+				tm^,
+			)
 			if !alive {
 				delete(playing.npc_snakes[i].body)
 				delete(playing.npc_snakes[i].head_dirs)
@@ -252,15 +267,15 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 			}
 			if npc_dies do continue
 
-		// Player head hits NPC body → player dies
-		if !npcs_only {
-			for seg in playing.npc_snakes[i].body {
-				if player_head == seg {
-					player_died(snake, food, playing, state, assets, tm)
-					return
+			// Player head hits NPC body → player dies
+			if !npcs_only {
+				for seg in playing.npc_snakes[i].body {
+					if player_head == seg {
+						player_died(snake, food, playing, state, assets, tm)
+						return
+					}
 				}
 			}
-		}
 
 			i += 1
 		}
@@ -301,7 +316,14 @@ update :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState,
 	}
 }
 
-player_died :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState, assets: ^Assets, tm: ^Tilemap) {
+player_died :: proc(
+	snake: ^Snake,
+	food: ^Food,
+	playing: ^Playing,
+	state: ^GameState,
+	assets: ^Assets,
+	tm: ^Tilemap,
+) {
 	raylib.PlaySound(assets^.sounds.game_over)
 	playing.lives -= 1
 
@@ -314,7 +336,9 @@ player_died :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameS
 		delete(playing.npc_snakes)
 		delete(playing.foul_foods)
 		delete(playing.splits_triggered)
-		state^ = GameOver{final_score = playing.total_score + playing.score}
+		state^ = GameOver {
+			final_score = playing.total_score + playing.score,
+		}
 		return
 	}
 
@@ -343,10 +367,18 @@ player_died :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameS
 	if playing.gate_open {
 		playing.gate_extra += 1
 	}
-	playing.gate_open = playing.score >= LEVELS[playing.current_level].gate_score + playing.gate_extra
+	playing.gate_open =
+		playing.score >= LEVELS[playing.current_level].gate_score + playing.gate_extra
 }
 
-advance_level :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^GameState, assets: ^Assets, tm: ^Tilemap) {
+advance_level :: proc(
+	snake: ^Snake,
+	food: ^Food,
+	playing: ^Playing,
+	state: ^GameState,
+	assets: ^Assets,
+	tm: ^Tilemap,
+) {
 	playing.current_level += 1
 
 	if playing.current_level >= len(LEVELS) {
@@ -358,7 +390,9 @@ advance_level :: proc(snake: ^Snake, food: ^Food, playing: ^Playing, state: ^Gam
 		delete(playing.npc_snakes)
 		delete(playing.foul_foods)
 		delete(playing.splits_triggered)
-		state^ = GameOver{final_score = playing.total_score + playing.score}
+		state^ = GameOver {
+			final_score = playing.total_score + playing.score,
+		}
 		return
 	}
 
@@ -420,10 +454,14 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int) {
 	tail_dir := snake.head_dirs[0]
 	opposite_dir := tail_dir
 	switch opposite_dir {
-	case .Up:    opposite_dir = .Down
-	case .Down:  opposite_dir = .Up
-	case .Left:  opposite_dir = .Right
-	case .Right: opposite_dir = .Left
+	case .Up:
+		opposite_dir = .Down
+	case .Down:
+		opposite_dir = .Up
+	case .Left:
+		opposite_dir = .Right
+	case .Right:
+		opposite_dir = .Left
 	}
 
 	new_body := make([dynamic]Vec2)
@@ -438,11 +476,11 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int) {
 	snake.body = new_body
 	snake.head_dirs = new_dirs
 
-	npc := NpcSnake{
-		body = npc_body,
+	npc := NpcSnake {
+		body      = npc_body,
 		head_dirs = npc_dirs,
 		direction = opposite_dir,
-		stun = 3,
+		stun      = 3,
 	}
 	append(&playing.npc_snakes, npc)
 }
@@ -457,7 +495,17 @@ check_split :: proc(snake: ^Snake, playing: ^Playing) {
 	}
 }
 
-move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, gate_open: bool, tm: Tilemap) -> (bool, bool) {
+move_npc :: proc(
+	npc: ^NpcSnake,
+	food: Vec2,
+	snake: ^Snake,
+	playing: ^Playing,
+	gate_open: bool,
+	tm: Tilemap,
+) -> (
+	bool,
+	bool,
+) {
 	if npc.stun > 0 {
 		npc.stun -= 1
 		return true, false
@@ -523,7 +571,12 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 	found_path := false
 
 	{
-		AStarNode :: struct { pos: Vec2, first_dir: Direction, g: int, f: int }
+		AStarNode :: struct {
+			pos:       Vec2,
+			first_dir: Direction,
+			g:         int,
+			f:         int,
+		}
 
 		open_set: [dynamic]AStarNode
 		defer delete(open_set)
@@ -551,7 +604,7 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 			current := open_set[best_idx]
 			unordered_remove(&open_set, best_idx)
 
-			if closed_set[current.pos] { continue }
+			if closed_set[current.pos] {continue}
 			closed_set[current.pos] = true
 
 			if current.pos == target {
@@ -572,19 +625,19 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 
 			for d, idx in dirs {
 				if current.pos == head {
-					if d == .Up    && npc.direction == .Down { continue }
-					if d == .Down  && npc.direction == .Up   { continue }
-					if d == .Left  && npc.direction == .Right { continue }
-					if d == .Right && npc.direction == .Left  { continue }
+					if d == .Up && npc.direction == .Down {continue}
+					if d == .Down && npc.direction == .Up {continue}
+					if d == .Left && npc.direction == .Right {continue}
+					if d == .Right && npc.direction == .Left {continue}
 				}
 
 				np := current.pos + dir_vecs[idx]
 
 				// Boundary wrapping
-				if np.x < 0 { np.x += GRID_WIDTH }
-				if np.x >= GRID_WIDTH { np.x -= GRID_WIDTH }
-				if np.y < 0 { np.y += GRID_HEIGHT }
-				if np.y >= GRID_HEIGHT { np.y -= GRID_HEIGHT }
+				if np.x < 0 {np.x += GRID_WIDTH}
+				if np.x >= GRID_WIDTH {np.x -= GRID_WIDTH}
+				if np.y < 0 {np.y += GRID_HEIGHT}
+				if np.y >= GRID_HEIGHT {np.y -= GRID_HEIGHT}
 
 				// Teleport via puddles
 				if is_puddle(tm, np) {
@@ -593,17 +646,20 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 					}
 				}
 
-				if closed_set[np] { continue }
-				if blocked[np] { continue }
+				if closed_set[np] {continue}
+				if blocked[np] {continue}
 
 				tentative_g := current.g + 1
-				if old_g, ok := g_scores[np]; ok && tentative_g >= old_g { continue }
+				if old_g, ok := g_scores[np]; ok && tentative_g >= old_g {continue}
 
 				g_scores[np] = tentative_g
 				came_from[np] = current.pos
 				first_dir := current.first_dir
-				if current.pos == head { first_dir = d }
-				append(&open_set, AStarNode{np, first_dir, tentative_g, tentative_g + m_dist(np, target)})
+				if current.pos == head {first_dir = d}
+				append(
+					&open_set,
+					AStarNode{np, first_dir, tentative_g, tentative_g + m_dist(np, target)},
+				)
 			}
 		}
 
@@ -615,23 +671,27 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 	if !found_path {
 		best_score := -999
 		for dir in dirs {
-			if dir == .Up    && npc.direction == .Down { continue }
-			if dir == .Down  && npc.direction == .Up   { continue }
-			if dir == .Left  && npc.direction == .Right { continue }
-			if dir == .Right && npc.direction == .Left  { continue }
+			if dir == .Up && npc.direction == .Down {continue}
+			if dir == .Down && npc.direction == .Up {continue}
+			if dir == .Left && npc.direction == .Right {continue}
+			if dir == .Right && npc.direction == .Left {continue}
 
 			np := head
 			switch dir {
-			case .Up:    np.y -= 1
-			case .Down:  np.y += 1
-			case .Left:  np.x -= 1
-			case .Right: np.x += 1
+			case .Up:
+				np.y -= 1
+			case .Down:
+				np.y += 1
+			case .Left:
+				np.x -= 1
+			case .Right:
+				np.x += 1
 			}
 
-			if np.x < 0 { np.x += GRID_WIDTH }
-			if np.x >= GRID_WIDTH { np.x -= GRID_WIDTH }
-			if np.y < 0 { np.y += GRID_HEIGHT }
-			if np.y >= GRID_HEIGHT { np.y -= GRID_HEIGHT }
+			if np.x < 0 {np.x += GRID_WIDTH}
+			if np.x >= GRID_WIDTH {np.x -= GRID_WIDTH}
+			if np.y < 0 {np.y += GRID_HEIGHT}
+			if np.y >= GRID_HEIGHT {np.y -= GRID_HEIGHT}
 
 			if is_puddle(tm, np) {
 				if tp, ok := teleport(tm, np); ok {
@@ -639,14 +699,14 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 				}
 			}
 
-			if blocked[np] { continue }
+			if blocked[np] {continue}
 
 			score := 0
-			if dir == npc.direction { score += 1 }
+			if dir == npc.direction {score += 1}
 			cur_player_dist := m_dist(head, snake.body[len(snake.body) - 1])
 			new_player_dist := m_dist(np, snake.body[len(snake.body) - 1])
-			if new_player_dist > cur_player_dist { score += 1 }
-			else if new_player_dist < cur_player_dist { score -= 1 }
+			if new_player_dist >
+			   cur_player_dist {score += 1} else if new_player_dist < cur_player_dist {score -= 1}
 
 			if score > best_score {
 				best_score = score
@@ -659,25 +719,29 @@ move_npc :: proc(npc: ^NpcSnake, food: Vec2, snake: ^Snake, playing: ^Playing, g
 		}
 	}
 
-	if best_dir == .Up    && npc.direction == .Down { best_dir = npc.direction }
-	if best_dir == .Down  && npc.direction == .Up   { best_dir = npc.direction }
-	if best_dir == .Left  && npc.direction == .Right { best_dir = npc.direction }
-	if best_dir == .Right && npc.direction == .Left  { best_dir = npc.direction }
+	if best_dir == .Up && npc.direction == .Down {best_dir = npc.direction}
+	if best_dir == .Down && npc.direction == .Up {best_dir = npc.direction}
+	if best_dir == .Left && npc.direction == .Right {best_dir = npc.direction}
+	if best_dir == .Right && npc.direction == .Left {best_dir = npc.direction}
 
 	npc.direction = best_dir
 	new_head := head
 	switch npc.direction {
-	case .Up:    new_head.y -= 1
-	case .Down:  new_head.y += 1
-	case .Left:  new_head.x -= 1
-	case .Right: new_head.x += 1
+	case .Up:
+		new_head.y -= 1
+	case .Down:
+		new_head.y += 1
+	case .Left:
+		new_head.x -= 1
+	case .Right:
+		new_head.x += 1
 	}
 
 	// Boundary wrapping
-	if new_head.x < 0 { new_head.x += GRID_WIDTH }
-	if new_head.x >= GRID_WIDTH { new_head.x -= GRID_WIDTH }
-	if new_head.y < 0 { new_head.y += GRID_HEIGHT }
-	if new_head.y >= GRID_HEIGHT { new_head.y -= GRID_HEIGHT }
+	if new_head.x < 0 {new_head.x += GRID_WIDTH}
+	if new_head.x >= GRID_WIDTH {new_head.x -= GRID_WIDTH}
+	if new_head.y < 0 {new_head.y += GRID_HEIGHT}
+	if new_head.y >= GRID_HEIGHT {new_head.y -= GRID_HEIGHT}
 
 	// Teleport via puddles
 	if is_puddle(tm, new_head) {
@@ -720,20 +784,24 @@ body_texture :: proc(s: Sprites, dir_in, dir_out: Vec2) -> raylib.Texture2D {
 	U := Vec2{0, -1}
 	D := Vec2{0, 1}
 
-	if dir_in == R && dir_out == U || dir_in == D && dir_out == L { return s.body_topleft }
-	if dir_in == L && dir_out == U || dir_in == D && dir_out == R { return s.body_topright }
-	if dir_in == R && dir_out == D || dir_in == U && dir_out == L { return s.body_bottomleft }
-	if dir_in == L && dir_out == D || dir_in == U && dir_out == R { return s.body_bottomright }
-	if dir_in.x != 0 { return s.body_horizontal }
+	if dir_in == R && dir_out == U || dir_in == D && dir_out == L {return s.body_topleft}
+	if dir_in == L && dir_out == U || dir_in == D && dir_out == R {return s.body_topright}
+	if dir_in == R && dir_out == D || dir_in == U && dir_out == L {return s.body_bottomleft}
+	if dir_in == L && dir_out == D || dir_in == U && dir_out == R {return s.body_bottomright}
+	if dir_in.x != 0 {return s.body_horizontal}
 	return s.body_vertical
 }
 
 dir_to_vec :: proc(d: Direction) -> Vec2 {
 	switch d {
-	case .Up:    return {0, -1}
-	case .Down:  return {0, 1}
-	case .Left:  return {-1, 0}
-	case .Right: return {1, 0}
+	case .Up:
+		return {0, -1}
+	case .Down:
+		return {0, 1}
+	case .Left:
+		return {-1, 0}
+	case .Right:
+		return {1, 0}
 	}
 	return {}
 }
@@ -756,7 +824,7 @@ draw_snake :: proc(snake: Snake, assets: Assets) {
 		} else if i == 0 {
 			draw_texture_at(assets.sprites.tail[snake.head_dirs[0]], pos)
 		} else {
-			dir_in := dir_to_vec(snake.head_dirs[i-1])
+			dir_in := dir_to_vec(snake.head_dirs[i - 1])
 			dir_out := dir_to_vec(snake.head_dirs[i])
 			tex := body_texture(assets.sprites, dir_in, dir_out)
 			draw_texture_at(tex, pos)
@@ -778,23 +846,49 @@ draw_npc_snake :: proc(npc: NpcSnake) {
 		} else {
 			color = raylib.Color{180, 40, 40, 255}
 		}
-		raylib.DrawRectangle(c.int(pos.x*CELL_SIZE), c.int(pos.y*CELL_SIZE), CELL_SIZE, CELL_SIZE, color)
+		raylib.DrawRectangle(
+			c.int(pos.x * CELL_SIZE),
+			c.int(pos.y * CELL_SIZE),
+			CELL_SIZE,
+			CELL_SIZE,
+			color,
+		)
 	}
 
-	for pos in npc.debug_path {
-		cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
-		cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
-		raylib.DrawCircle(cx, cy, 6, raylib.Color{100, 255, 100, 180})
+	//for pos in npc.debug_path {
+	if len(npc.debug_path) > 2 {
+		for pos in npc.debug_path[1:len(npc.debug_path) - 1] {
+			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
+			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
+			raylib.DrawCircle(cx, cy, 6, raylib.Color{100, 255, 100, 180})
+		}
 	}
 }
 
 draw_food :: proc(food: Food, assets: Assets) {
-	raylib.DrawTexture(assets.sprites.apple, c.int(food.x * CELL_SIZE), c.int(food.y * CELL_SIZE), raylib.WHITE)
+	raylib.DrawTexture(
+		assets.sprites.apple,
+		c.int(food.x * CELL_SIZE),
+		c.int(food.y * CELL_SIZE),
+		raylib.WHITE,
+	)
 }
 
 draw_foul_food :: proc(pos: Vec2) {
-	raylib.DrawRectangle(c.int(pos.x * CELL_SIZE), c.int(pos.y * CELL_SIZE), CELL_SIZE, CELL_SIZE, raylib.Color{120, 40, 160, 255})
-	raylib.DrawRectangle(c.int(pos.x * CELL_SIZE + 5), c.int(pos.y * CELL_SIZE + 5), CELL_SIZE - 10, CELL_SIZE - 10, raylib.Color{80, 20, 120, 255})
+	raylib.DrawRectangle(
+		c.int(pos.x * CELL_SIZE),
+		c.int(pos.y * CELL_SIZE),
+		CELL_SIZE,
+		CELL_SIZE,
+		raylib.Color{120, 40, 160, 255},
+	)
+	raylib.DrawRectangle(
+		c.int(pos.x * CELL_SIZE + 5),
+		c.int(pos.y * CELL_SIZE + 5),
+		CELL_SIZE - 10,
+		CELL_SIZE - 10,
+		raylib.Color{80, 20, 120, 255},
+	)
 }
 
 draw_hud :: proc(playing: Playing) {
@@ -882,15 +976,16 @@ draw_hud :: proc(playing: Playing) {
 
 draw_score :: proc(score, total: int) {
 	text := raylib.TextFormat("Level: %d  Total: %d", score, total)
-	raylib.DrawText(text, c.int(CELL_SIZE/2), c.int(CELL_SIZE/2), CELL_SIZE, raylib.RAYWHITE)
+	raylib.DrawText(text, c.int(CELL_SIZE / 2), c.int(CELL_SIZE / 2), CELL_SIZE, raylib.RAYWHITE)
 }
 
 draw_lives :: proc(lives: int) {
 	for i in 0 ..< lives {
 		raylib.DrawRectangle(
-			c.int(SCREEN_WIDTH - CELL_SIZE*(lives-i)),
-			c.int(CELL_SIZE/2),
-			CELL_SIZE-4, CELL_SIZE-4,
+			c.int(SCREEN_WIDTH - CELL_SIZE * (lives - i)),
+			c.int(CELL_SIZE / 2),
+			CELL_SIZE - 4,
+			CELL_SIZE - 4,
 			raylib.RED,
 		)
 	}
@@ -899,7 +994,13 @@ draw_lives :: proc(lives: int) {
 draw_level_label :: proc(label: string) {
 	cstr := strings.clone_to_cstring(label)
 	defer delete(cstr)
-	raylib.DrawText(cstr, c.int(SCREEN_WIDTH/2 - CELL_SIZE*3), c.int(SCREEN_HEIGHT - CELL_SIZE), CELL_SIZE, raylib.Color{200, 200, 200, 255})
+	raylib.DrawText(
+		cstr,
+		c.int(SCREEN_WIDTH / 2 - CELL_SIZE * 3),
+		c.int(SCREEN_HEIGHT - CELL_SIZE),
+		CELL_SIZE,
+		raylib.Color{200, 200, 200, 255},
+	)
 }
 
 draw_countdown :: proc(timer: f32) {
@@ -909,14 +1010,24 @@ draw_countdown :: proc(timer: f32) {
 	}
 	text: cstring
 	switch sec {
-	case 4: text = "3"
-	case 3: text = "2"
-	case 2: text = "1"
-	case 1: text = "GO!"
+	case 4:
+		text = "3"
+	case 3:
+		text = "2"
+	case 2:
+		text = "1"
+	case 1:
+		text = "GO!"
 	}
 	fsize: c.int = CELL_SIZE * 4
 	tw := raylib.MeasureText(text, fsize)
-	raylib.DrawText(text, (SCREEN_WIDTH - tw) / 2, WINDOW_HEIGHT / 2 - fsize, fsize, raylib.Color{255, 255, 100, 255})
+	raylib.DrawText(
+		text,
+		(SCREEN_WIDTH - tw) / 2,
+		WINDOW_HEIGHT / 2 - fsize,
+		fsize,
+		raylib.Color{255, 255, 100, 255},
+	)
 }
 
 draw_debug_overlay :: proc(frame_count: u64) {
@@ -940,7 +1051,19 @@ draw_game_over :: proc(score: int) {
 	w2 := raylib.MeasureText(text2, fsize2)
 	w3 := raylib.MeasureText(text3, fsize3)
 
-	raylib.DrawText(text1, (SCREEN_WIDTH - w1) / 2, WINDOW_HEIGHT / 2 - 2 * fsize1, fsize1, raylib.RED)
+	raylib.DrawText(
+		text1,
+		(SCREEN_WIDTH - w1) / 2,
+		WINDOW_HEIGHT / 2 - 2 * fsize1,
+		fsize1,
+		raylib.RED,
+	)
 	raylib.DrawText(text2, (SCREEN_WIDTH - w2) / 2, WINDOW_HEIGHT / 2, fsize2, raylib.RAYWHITE)
-	raylib.DrawText(text3, (SCREEN_WIDTH - w3) / 2, WINDOW_HEIGHT / 2 + fsize2 + fsize3, fsize3, raylib.GRAY)
+	raylib.DrawText(
+		text3,
+		(SCREEN_WIDTH - w3) / 2,
+		WINDOW_HEIGHT / 2 + fsize2 + fsize3,
+		fsize3,
+		raylib.GRAY,
+	)
 }
