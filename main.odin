@@ -176,6 +176,8 @@ main :: proc() {
 			)
 
 		case Playing:
+			if raylib.IsKeyPressed(.H) { show_hint = !show_hint }
+			playing := &state.(Playing)
 			draw_hud(s)
 			raylib.BeginMode2D(camera)
 			gate_threshold := LEVELS[s.current_level].gate_score + s.gate_extra
@@ -190,6 +192,40 @@ main :: proc() {
 			}
 			for npc in s.npc_snakes {
 				draw_npc_snake(npc)
+			}
+			if show_hint {
+				target: Vec2
+				has_target := false
+				if playing.gate_open && tilemap.has_gate {
+					target = tilemap.gate_pos
+					has_target = true
+				} else if food.x >= 0 {
+					target = food
+					has_target = true
+				}
+				if has_target {
+					m_dist :: proc(a, b: Vec2) -> int {
+						dx := abs(a.x - b.x)
+						dy := abs(a.y - b.y)
+						return min(dx, 20 - dx) + min(dy, 20 - dy)
+					}
+					head := snake.body[len(snake.body) - 1]
+					player_dist := m_dist(head, target)
+					npc_closer := false
+					for npc in playing.npc_snakes {
+						if len(npc.body) == 0 { continue }
+						npc_head := npc.body[len(npc.body) - 1]
+						if m_dist(npc_head, target) < player_dist {
+							npc_closer = true
+							break
+						}
+					}
+					if !npc_closer {
+						path := find_path(&snake, playing, &tilemap, food)
+						draw_hint(path)
+						delete(path)
+					}
+				}
 			}
 			raylib.EndMode2D()
 			if s.countdown > 0 {

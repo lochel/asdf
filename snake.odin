@@ -495,6 +495,125 @@ check_split :: proc(snake: ^Snake, playing: ^Playing) {
 	}
 }
 
+show_hint: bool
+
+find_path :: proc(snake: ^Snake, playing: ^Playing, tm: ^Tilemap, food: Vec2) -> [dynamic]Vec2 {
+	result: [dynamic]Vec2
+	head := snake.body[len(snake.body) - 1]
+
+	target: Vec2
+	has_target := false
+	if playing.gate_open && tm.has_gate {
+		target = tm.gate_pos
+		has_target = true
+	} else if food.x >= 0 {
+		target = food
+		has_target = true
+	}
+	if !has_target {return result}
+
+	m_dist :: proc(a, b: Vec2) -> int {
+		dx := abs(a.x - b.x)
+		dy := abs(a.y - b.y)
+		return min(dx, GRID_WIDTH - dx) + min(dy, GRID_HEIGHT - dy)
+	}
+
+	dirs := [4]Vec2{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+
+	blocked := make(map[Vec2]bool)
+	defer delete(blocked)
+
+	for x in 0 ..< GRID_WIDTH {
+		for y in 0 ..< GRID_HEIGHT {
+			pos := Vec2{x, y}
+			if is_wall(tm^, pos) || (is_gate(tm^, pos) && !playing.gate_open) {
+				blocked[pos] = true
+			}
+		}
+	}
+	for seg in snake.body {blocked[seg] = true}
+	for npc in playing.npc_snakes {
+		for seg in npc.body {blocked[seg] = true}
+	}
+
+	AStarNode :: struct {
+		pos: Vec2,
+		g:   int,
+		f:   int,
+	}
+	open_set: [dynamic]AStarNode
+	defer delete(open_set)
+	closed_set := make(map[Vec2]bool)
+	defer delete(closed_set)
+	g_scores := make(map[Vec2]int)
+	defer delete(g_scores)
+	came_from := make(map[Vec2]Vec2)
+	defer delete(came_from)
+
+	h := m_dist(head, target)
+	append(&open_set, AStarNode{head, 0, h})
+	g_scores[head] = 0
+
+	for len(open_set) > 0 {
+		best_idx := 0
+		for j in 1 ..< len(open_set) {
+			if open_set[j].f < open_set[best_idx].f {best_idx = j}
+		}
+		current := open_set[best_idx]
+		unordered_remove(&open_set, best_idx)
+
+		if closed_set[current.pos] {continue}
+		closed_set[current.pos] = true
+
+		if current.pos == target {
+			p := current.pos
+			for p != head {
+				append(&result, p)
+				p = came_from[p]
+			}
+			for i in 0 ..< len(result) / 2 {
+				j := len(result) - 1 - i
+				result[i], result[j] = result[j], result[i]
+			}
+			return result
+		}
+
+		for d in dirs {
+			np := current.pos + d
+			if np.x < 0 {np.x += GRID_WIDTH}
+			if np.x >= GRID_WIDTH {np.x -= GRID_WIDTH}
+			if np.y < 0 {np.y += GRID_HEIGHT}
+			if np.y >= GRID_HEIGHT {np.y -= GRID_HEIGHT}
+
+			if is_puddle(tm^, np) {
+				if tp, ok := teleport(tm^, np); ok {np = tp}
+			}
+
+			if closed_set[np] {continue}
+			if blocked[np] {continue}
+
+			tentative_g := current.g + 1
+			if old_g, ok := g_scores[np]; ok && tentative_g >= old_g {continue}
+
+			g_scores[np] = tentative_g
+			came_from[np] = current.pos
+			append(&open_set, AStarNode{np, tentative_g, tentative_g + m_dist(np, target)})
+		}
+	}
+
+	return result
+}
+
+draw_hint :: proc(path: [dynamic]Vec2) {
+	if len(path) > 1 {
+		for pos in path[0:len(path) - 1] {
+			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
+			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
+			raylib.DrawCircle(cx, cy, 6, raylib.Color{80, 140, 255, 140})
+		}
+    }
+}
+
 move_npc :: proc(
 	npc: ^NpcSnake,
 	food: Vec2,
