@@ -188,13 +188,13 @@ update :: proc(
 				playing.gate_open = playing.score >= gate_threshold
 				if playing.gate_open {
 					food^ = {-1, -1}
-					raylib.PlaySound(assets^.sounds.eat)
+					raylib.PlaySound(assets^.sounds.gate_open)
 				} else {
 					spawn_food(snake, food, tm^, playing)
 				}
 			}
 
-			check_split(snake, playing)
+			check_split(snake, playing, assets)
 		} else if playing.spawning == 0 {
 			for i in 0 ..< len(snake.body) - 1 {
 				snake.body[i] = snake.body[i + 1]
@@ -434,10 +434,10 @@ advance_level :: proc(
 
 	playing.lives = min(playing.lives + 1, 3)
 
-	raylib.PlaySound(assets^.sounds.eat)
+	raylib.PlaySound(assets^.sounds.level_complete)
 }
 
-perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int) {
+perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets: ^Assets) {
 	playing.splits_triggered[split_score] = true
 	playing.foul_apples += 1
 
@@ -476,6 +476,8 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int) {
 	snake.body = new_body
 	snake.head_dirs = new_dirs
 
+	raylib.PlaySound(assets.sounds.split)
+
 	npc := NpcSnake {
 		body      = npc_body,
 		head_dirs = npc_dirs,
@@ -485,11 +487,11 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int) {
 	append(&playing.npc_snakes, npc)
 }
 
-check_split :: proc(snake: ^Snake, playing: ^Playing) {
+check_split :: proc(snake: ^Snake, playing: ^Playing, assets: ^Assets) {
 	level := LEVELS[playing.current_level]
 	for split_score in level.split_scores {
 		if playing.score >= split_score && !playing.splits_triggered[split_score] {
-			perform_split(snake, playing, split_score)
+			perform_split(snake, playing, split_score, assets)
 			break
 		}
 	}
@@ -878,6 +880,7 @@ move_npc :: proc(
 		}
 	}
 
+	npc.head_dirs[len(npc.head_dirs) - 1] = npc.direction
 	append(&npc.body, new_head)
 	append(&npc.head_dirs, npc.direction)
 	if !ate {
@@ -951,30 +954,27 @@ draw_snake :: proc(snake: Snake, assets: Assets) {
 	}
 }
 
-draw_npc_snake :: proc(npc: NpcSnake) {
+draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 	n := len(npc.body)
 	if n == 0 do return
 
+	tint := raylib.Color{255, 100, 100, 255}
+	head_idx := n - 1
+
 	for i in 0 ..< n {
 		pos := npc.body[i]
-		color: raylib.Color
-		if i == n - 1 {
-			color = raylib.Color{220, 50, 50, 255}
+		if i == head_idx {
+			raylib.DrawTexture(assets.sprites.head[npc.head_dirs[head_idx]], c.int(pos.x * CELL_SIZE), c.int(pos.y * CELL_SIZE), tint)
 		} else if i == 0 {
-			color = raylib.Color{140, 30, 30, 255}
+			raylib.DrawTexture(assets.sprites.tail[npc.head_dirs[0]], c.int(pos.x * CELL_SIZE), c.int(pos.y * CELL_SIZE), tint)
 		} else {
-			color = raylib.Color{180, 40, 40, 255}
+			dir_in := dir_to_vec(npc.head_dirs[i - 1])
+			dir_out := dir_to_vec(npc.head_dirs[i])
+			tex := body_texture(assets.sprites, dir_in, dir_out)
+			raylib.DrawTexture(tex, c.int(pos.x * CELL_SIZE), c.int(pos.y * CELL_SIZE), tint)
 		}
-		raylib.DrawRectangle(
-			c.int(pos.x * CELL_SIZE),
-			c.int(pos.y * CELL_SIZE),
-			CELL_SIZE,
-			CELL_SIZE,
-			color,
-		)
 	}
 
-	//for pos in npc.debug_path {
 	if len(npc.debug_path) > 2 {
 		for pos in npc.debug_path[1:len(npc.debug_path) - 1] {
 			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
@@ -993,20 +993,12 @@ draw_food :: proc(food: Food, assets: Assets) {
 	)
 }
 
-draw_foul_food :: proc(pos: Vec2) {
-	raylib.DrawRectangle(
+draw_foul_food :: proc(pos: Vec2, assets: Assets) {
+	raylib.DrawTexture(
+		assets.sprites.foul_apple,
 		c.int(pos.x * CELL_SIZE),
 		c.int(pos.y * CELL_SIZE),
-		CELL_SIZE,
-		CELL_SIZE,
-		raylib.Color{120, 40, 160, 255},
-	)
-	raylib.DrawRectangle(
-		c.int(pos.x * CELL_SIZE + 5),
-		c.int(pos.y * CELL_SIZE + 5),
-		CELL_SIZE - 10,
-		CELL_SIZE - 10,
-		raylib.Color{80, 20, 120, 255},
+		raylib.WHITE,
 	)
 }
 

@@ -47,7 +47,7 @@ main :: proc() {
 	food: Food = {-1, -1}
 	state: GameState = Menu{}
 	move_timer: f32 = 0
-	move_delay: f32 = 0.25
+	move_delay: f32 = 0.2
 	frame_count: u64 = 0
 
 	tilemap_loaded := false
@@ -185,13 +185,13 @@ main :: proc() {
 			draw_background(tilemap, assets, remaining)
 			draw_food(food, assets)
 			for ff in s.foul_foods {
-				draw_foul_food(ff.pos)
+				draw_foul_food(ff.pos, assets)
 			}
 			if s.countdown <= 0 {
 				draw_snake(snake, assets)
 			}
 			for npc in s.npc_snakes {
-				draw_npc_snake(npc)
+				draw_npc_snake(npc, assets)
 			}
 			if show_hint {
 				target: Vec2

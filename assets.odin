@@ -4,6 +4,7 @@ import "vendor:raylib"
 
 Sprites :: struct {
 	apple:            raylib.Texture2D,
+	foul_apple:       raylib.Texture2D,
 	head:             [Direction]raylib.Texture2D,
 	tail:             [Direction]raylib.Texture2D,
 	body_horizontal:  raylib.Texture2D,
@@ -19,7 +20,10 @@ Sprites :: struct {
 
 Sounds :: struct {
     game_over: raylib.Sound,
-	eat: raylib.Sound
+	eat: raylib.Sound,
+	split: raylib.Sound,
+	gate_open: raylib.Sound,
+	level_complete: raylib.Sound,
 }
 
 Assets :: struct {
@@ -44,12 +48,18 @@ load_sounds :: proc() -> Sounds {
     sounds := Sounds{}
 	sounds.game_over = raylib.LoadSound("assets/sounds/mixkit-arcade-retro-game-over-213.wav")
 	sounds.eat = raylib.LoadSound("assets/sounds/mixkit-retro-game-notification-212.wav")
+	sounds.split = raylib.LoadSound("assets/sounds/mixkit-robot-system-fail-2960.wav")
+	sounds.gate_open = raylib.LoadSound("assets/sounds/mixkit-arcade-bonus-alert-767.wav")
+	sounds.level_complete = raylib.LoadSound("assets/sounds/mixkit-arcade-game-complete-or-approved-mission-205.wav")
     return sounds
 }
 
 unload_sounds :: proc(sounds: Sounds) {
 	raylib.UnloadSound(sounds.game_over)
 	raylib.UnloadSound(sounds.eat)
+	raylib.UnloadSound(sounds.split)
+	raylib.UnloadSound(sounds.gate_open)
+	raylib.UnloadSound(sounds.level_complete)
 }
 
 load_sprites :: proc() -> Sprites {
@@ -62,8 +72,19 @@ load_sprites :: proc() -> Sprites {
 		return tex
 	}
 
+	load_tinted_tex :: proc(path: cstring, tint: raylib.Color) -> raylib.Texture2D {
+		img := raylib.LoadImage(path)
+		defer raylib.UnloadImage(img)
+		raylib.ImageResizeNN(&img, CELL_SIZE, CELL_SIZE)
+		raylib.ImageColorTint(&img, tint)
+		tex := raylib.LoadTextureFromImage(img)
+		raylib.SetTextureFilter(tex, .POINT)
+		return tex
+	}
+
 	s := Sprites{}
 	s.apple = load_tex("assets/graphics/apple.png")
+	s.foul_apple = load_tinted_tex("assets/graphics/apple.png", {110, 50, 15, 255})
 
 	s.head[.Up] = load_tex("assets/graphics/head_up.png")
 	s.head[.Down] = load_tex("assets/graphics/head_down.png")
@@ -99,6 +120,7 @@ load_sprites :: proc() -> Sprites {
 
 unload_sprites :: proc(s: Sprites) {
 	raylib.UnloadTexture(s.apple)
+	raylib.UnloadTexture(s.foul_apple)
 	for d in Direction {
 		raylib.UnloadTexture(s.head[d])
 		raylib.UnloadTexture(s.tail[d])
