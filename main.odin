@@ -100,29 +100,6 @@ main :: proc() {
 		switch s in state {
 		case Menu:
 			m := &state.(Menu)
-
-			if !tilemap_loaded {
-				tilemap = load_tilemap(LEVELS[0].file)
-				tilemap_loaded = true
-
-				clear(&snake.body)
-				clear(&snake.head_dirs)
-				s := tilemap.start_pos
-				if !tilemap.has_start {
-					s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-				}
-				append(&snake.body, s)
-				append(&snake.head_dirs, Direction.Right)
-				snake.direction = .Right
-				snake.next_direction = .Right
-
-				spawn_food(&snake, &m.demo_food, tilemap, nil)
-
-				spawn_demo_npc(m, tilemap)
-				spawn_demo_npc(m, tilemap)
-				spawn_demo_npc(m, tilemap)
-			}
-
 			if raylib.IsKeyPressed(.SPACE) || raylib.IsKeyPressed(.ENTER) || controller_confirm() {
 				for npc in m.demo_npcs {
 					delete(npc.body)
@@ -241,6 +218,29 @@ main :: proc() {
 		switch s in state {
 		case Menu:
 			m := &state.(Menu)
+
+			if !tilemap_loaded {
+				tilemap = load_tilemap(LEVELS[0].file)
+				tilemap_loaded = true
+
+				clear(&snake.body)
+				clear(&snake.head_dirs)
+				s := tilemap.start_pos
+				if !tilemap.has_start {
+					s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
+				}
+				append(&snake.body, s)
+				append(&snake.head_dirs, Direction.Right)
+				snake.direction = .Right
+				snake.next_direction = .Right
+
+				spawn_food(&snake, &m.demo_food, tilemap, nil)
+
+				spawn_demo_npc(m, tilemap)
+				spawn_demo_npc(m, tilemap)
+				spawn_demo_npc(m, tilemap)
+			}
+
 			if tilemap.has_start {
 				tilemap.tiles[tilemap.start_pos.y][tilemap.start_pos.x] = .Grass
 			}
