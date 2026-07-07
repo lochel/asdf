@@ -86,8 +86,6 @@ main :: proc() {
 	move_timer: f32 = 0
 	move_delay: f32 = 0.2
 	frame_count: u64 = 0
-	fullscreen := false
-
 	tilemap_loaded := false
 	tilemap: Tilemap
 
@@ -405,15 +403,13 @@ main :: proc() {
 		dh := th * scale
 		dx := (sw - dw) / 2
 		dy := (sh - dh) / 2
-		raylib.ClearBackground(raylib.RED)
+		raylib.ClearBackground(raylib.BLACK)
 		raylib.DrawTexturePro(
 			render_tex.texture,
 			raylib.Rectangle{0, 0, tw, -th},
 			raylib.Rectangle{dx, dy, dw, dh},
 			{0, 0}, 0, raylib.WHITE,
 		)
-		info := raylib.TextFormat("%.0fx%.0f scale=%.2f", sw, sh, scale)
-		raylib.DrawText(info, 10, 10, 20, raylib.RED)
 		raylib.EndDrawing()
 		save_joy_button_state()
 	}
