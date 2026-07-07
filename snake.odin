@@ -64,27 +64,6 @@ spawn_food :: proc(snake: ^Snake, food: ^Food, tm: Tilemap, playing: ^Playing) {
 	}
 }
 
-draw_grid :: proc() {
-	for x in 0 ..= GRID_WIDTH {
-		raylib.DrawLine(
-			c.int(x * CELL_SIZE),
-			0,
-			c.int(x * CELL_SIZE),
-			c.int(SCREEN_HEIGHT),
-			raylib.Color{50, 50, 50, 255},
-		)
-	}
-	for y in 0 ..= GRID_HEIGHT {
-		raylib.DrawLine(
-			0,
-			c.int(y * CELL_SIZE),
-			c.int(SCREEN_WIDTH),
-			c.int(y * CELL_SIZE),
-			raylib.Color{50, 50, 50, 255},
-		)
-	}
-}
-
 update :: proc(
 	snake: ^Snake,
 	food: ^Food,
@@ -885,7 +864,6 @@ move_npc :: proc(
 
 draw_background :: proc(tm: Tilemap, assets: Assets, remaining: int) {
 	draw_tilemap(tm, assets, remaining)
-	draw_grid()
 }
 
 body_texture :: proc(s: Sprites, dir_in, dir_out: Vec2) -> raylib.Texture2D {
