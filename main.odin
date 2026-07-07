@@ -396,8 +396,8 @@ main :: proc() {
 		raylib.EndTextureMode()
 
 		raylib.BeginDrawing()
-		sw := f32(raylib.GetScreenWidth())
-		sh := f32(raylib.GetScreenHeight())
+		sw := f32(raylib.GetRenderWidth())
+		sh := f32(raylib.GetRenderHeight())
 		tw := f32(SCREEN_WIDTH)
 		th := f32(WINDOW_HEIGHT)
 		scale := min(sw / tw, sh / th)
@@ -405,13 +405,15 @@ main :: proc() {
 		dh := th * scale
 		dx := (sw - dw) / 2
 		dy := (sh - dh) / 2
-		raylib.ClearBackground(raylib.BLACK)
+		raylib.ClearBackground(raylib.RED)
 		raylib.DrawTexturePro(
 			render_tex.texture,
 			raylib.Rectangle{0, 0, tw, -th},
 			raylib.Rectangle{dx, dy, dw, dh},
 			{0, 0}, 0, raylib.WHITE,
 		)
+		info := raylib.TextFormat("%.0fx%.0f scale=%.2f", sw, sh, scale)
+		raylib.DrawText(info, 10, 10, 20, raylib.RED)
 		raylib.EndDrawing()
 		save_joy_button_state()
 	}
