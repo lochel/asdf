@@ -96,14 +96,7 @@ main :: proc() {
 		read_joystick()
 
 		if raylib.IsKeyPressed(.F) {
-			fullscreen = !fullscreen
-			if fullscreen {
-				m := raylib.GetCurrentMonitor()
-				raylib.SetWindowSize(raylib.GetMonitorWidth(m), raylib.GetMonitorHeight(m))
-				raylib.SetWindowPosition(0, 0)
-			} else {
-				raylib.SetWindowSize(SCREEN_WIDTH, WINDOW_HEIGHT)
-			}
+			raylib.ToggleFullscreen()
 		}
 
 		switch s in state {
