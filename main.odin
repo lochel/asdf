@@ -274,7 +274,7 @@ main :: proc() {
 			if tilemap.has_start {
 				tilemap.tiles[tilemap.start_pos.y][tilemap.start_pos.x] = .Start
 			}
-			raylib.DrawRectangle(0, 0, SCREEN_WIDTH, WINDOW_HEIGHT, raylib.Color{0, 0, 0, 100})
+			raylib.DrawRectangle(0, 0, SCREEN_WIDTH, WINDOW_HEIGHT, raylib.Color{0, 0, 0, 65})
 
 			raylib.DrawRectangle(0, 0, SCREEN_WIDTH, HUD_HEIGHT, raylib.Color{42, 112, 20, 255})
 			raylib.DrawLine(0, HUD_HEIGHT - 1, SCREEN_WIDTH, HUD_HEIGHT - 1, raylib.Color{30, 80, 14, 255})
@@ -292,7 +292,18 @@ main :: proc() {
 				x += raylib.MeasureText(val, fs_big) + 24
 			}
 
-			hint: cstring = "Press SPACE to start"
+			title: cstring = "SNAKE"
+		title_size: c.int = CELL_SIZE * 4
+		tw_title := raylib.MeasureText(title, title_size)
+		raylib.DrawText(
+			title,
+			(SCREEN_WIDTH - tw_title) / 2,
+			CELL_SIZE * 4,
+			title_size,
+			raylib.GREEN
+		)
+
+		hint: cstring = "Press SPACE to start"
 			hint_size: c.int = CELL_SIZE
 			hw := raylib.MeasureText(hint, hint_size)
 			raylib.DrawText(
