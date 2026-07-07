@@ -48,7 +48,7 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 
 main :: proc() {
 	raylib.SetTraceLogLevel(.NONE)
-	raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE})
+	raylib.SetConfigFlags({.VSYNC_HINT})
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
 	raylib.SetExitKey(.KEY_NULL)
@@ -98,6 +98,9 @@ main :: proc() {
 		if raylib.IsKeyPressed(.F) {
 			fullscreen = !fullscreen
 			raylib.ToggleFullscreen()
+			if !fullscreen {
+				raylib.SetWindowSize(SCREEN_WIDTH, WINDOW_HEIGHT)
+			}
 		}
 
 		switch s in state {
@@ -397,24 +400,31 @@ main :: proc() {
 		raylib.EndTextureMode()
 
 		raylib.BeginDrawing()
-		win_w := raylib.GetScreenWidth()
-		win_h := raylib.GetScreenHeight()
+		sw: f32
+		sh: f32
 		if fullscreen {
 			m := raylib.GetCurrentMonitor()
-			win_w = raylib.GetMonitorWidth(m)
-			win_h = raylib.GetMonitorHeight(m)
+			mw := raylib.GetMonitorWidth(m)
+			mh := raylib.GetMonitorHeight(m)
+			if mw > 0 && mh > 0 {
+				sw, sh = f32(mw), f32(mh)
+			} else {
+				sw, sh = f32(raylib.GetScreenWidth()), f32(raylib.GetScreenHeight())
+			}
+		} else {
+			sw, sh = f32(raylib.GetScreenWidth()), f32(raylib.GetScreenHeight())
 		}
-		sw := f32(win_w)
-		sh := f32(win_h)
-		scale := min(sw / f32(SCREEN_WIDTH), sh / f32(WINDOW_HEIGHT))
-		dw := f32(SCREEN_WIDTH) * scale
-		dh := f32(WINDOW_HEIGHT) * scale
+		tw := f32(SCREEN_WIDTH)
+		th := f32(WINDOW_HEIGHT)
+		scale := min(sw / tw, sh / th)
+		dw := tw * scale
+		dh := th * scale
 		dx := (sw - dw) / 2
 		dy := (sh - dh) / 2
 		raylib.ClearBackground(raylib.BLACK)
 		raylib.DrawTexturePro(
 			render_tex.texture,
-			raylib.Rectangle{0, 0, f32(SCREEN_WIDTH), -f32(WINDOW_HEIGHT)},
+			raylib.Rectangle{0, 0, tw, -th},
 			raylib.Rectangle{dx, dy, dw, dh},
 			{0, 0}, 0, raylib.WHITE,
 		)
