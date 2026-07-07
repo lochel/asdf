@@ -245,6 +245,21 @@ main :: proc() {
 			for npc in m.demo_npcs {
 				draw_npc_snake(npc, assets)
 			}
+			if m.demo_food.x >= 0 {
+				best_npc_path: [dynamic]Vec2
+				best_tint: raylib.Color
+				best_len := max(int)
+				for npc in m.demo_npcs {
+					if len(npc.debug_path) > 2 && len(npc.debug_path) < best_len {
+						best_len = len(npc.debug_path)
+						best_npc_path = npc.debug_path
+						best_tint = npc.tint
+					}
+				}
+				if best_npc_path != nil {
+					draw_path(best_npc_path, best_tint)
+				}
+			}
 			raylib.EndMode2D()
 			if tilemap.has_start {
 				tilemap.tiles[tilemap.start_pos.y][tilemap.start_pos.x] = .Start
@@ -307,38 +322,48 @@ main :: proc() {
 			for npc in s.npc_snakes {
 				draw_npc_snake(npc, assets)
 			}
-			if show_hint {
-				target: Vec2
-				has_target := false
-				if playing.gate_open && tilemap.has_gate {
-					target = tilemap.gate_pos
-					has_target = true
-				} else if food.x >= 0 {
-					target = food
-					has_target = true
+			// Draw shortest path to target
+			target: Vec2
+			has_target := false
+			if playing.gate_open && tilemap.has_gate {
+				target = tilemap.gate_pos
+				has_target = true
+			} else if food.x >= 0 {
+				target = food
+				has_target = true
+			}
+			if has_target {
+				best_path: [dynamic]Vec2
+				best_tint: raylib.Color
+				best_len := max(int)
+				candidate_paths: [dynamic][dynamic]Vec2
+				defer delete(candidate_paths)
+
+				// Player path (only in H-mode)
+				if show_hint {
+					p := find_path(&snake, playing, &tilemap, target)
+					if len(p) > 2 && len(p) < best_len {
+						best_len = len(p)
+						best_path = p
+						best_tint = raylib.Color{80, 140, 255, 140}
+					}
+					append(&candidate_paths, p)
 				}
-				if has_target {
-					m_dist :: proc(a, b: Vec2) -> int {
-						dx := abs(a.x - b.x)
-						dy := abs(a.y - b.y)
-						return min(dx, 20 - dx) + min(dy, 20 - dy)
+
+				for npc in s.npc_snakes {
+					if len(npc.debug_path) > 2 && len(npc.debug_path) < best_len {
+						best_len = len(npc.debug_path)
+						best_path = npc.debug_path
+						best_tint = npc.tint
 					}
-					head := snake.body[len(snake.body) - 1]
-					player_dist := m_dist(head, target)
-					npc_closer := false
-					for npc in playing.npc_snakes {
-						if len(npc.body) == 0 { continue }
-						npc_head := npc.body[len(npc.body) - 1]
-						if m_dist(npc_head, target) < player_dist {
-							npc_closer = true
-							break
-						}
-					}
-					if !npc_closer {
-						path := find_path(&snake, playing, &tilemap, food)
-						draw_hint(path)
-						delete(path)
-					}
+				}
+
+				if best_path != nil {
+					draw_path(best_path, best_tint)
+				}
+
+				for p in candidate_paths {
+					delete(p)
 				}
 			}
 			raylib.EndMode2D()

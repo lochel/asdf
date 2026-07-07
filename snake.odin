@@ -605,6 +605,16 @@ draw_hint :: proc(path: [dynamic]Vec2) {
     }
 }
 
+draw_path :: proc(path: [dynamic]Vec2, tint: raylib.Color) {
+	if len(path) > 2 {
+		for pos in path[1:len(path) - 1] {
+			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
+			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
+			raylib.DrawCircle(cx, cy, 6, tint)
+		}
+	}
+}
+
 move_npc :: proc(
 	npc: ^NpcSnake,
 	food: Vec2,
@@ -983,14 +993,6 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 	}
 
 	raylib.EndShaderMode()
-
-	if len(npc.debug_path) > 2 {
-		for pos in npc.debug_path[1:len(npc.debug_path) - 1] {
-			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
-			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
-			raylib.DrawCircle(cx, cy, 6, raylib.Color{100, 255, 100, 180})
-		}
-	}
 }
 
 draw_food :: proc(food: Food, assets: Assets) {
