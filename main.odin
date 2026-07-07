@@ -48,7 +48,7 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 
 main :: proc() {
 	raylib.SetTraceLogLevel(.NONE)
-	raylib.SetConfigFlags({.VSYNC_HINT})
+	raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE})
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
 	raylib.SetExitKey(.KEY_NULL)
