@@ -595,23 +595,12 @@ find_path :: proc(snake: ^Snake, playing: ^Playing, tm: ^Tilemap, food: Vec2) ->
 	return result
 }
 
-draw_hint :: proc(path: [dynamic]Vec2) {
-	if len(path) > 1 {
-		for pos in path[0:len(path) - 1] {
-			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
-			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
-			raylib.DrawCircle(cx, cy, 6, raylib.Color{80, 140, 255, 140})
-		}
-    }
-}
-
-draw_path :: proc(path: [dynamic]Vec2, tint: raylib.Color) {
-	if len(path) > 2 {
-		for pos in path[1:len(path) - 1] {
-			cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
-			cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
-			raylib.DrawCircle(cx, cy, 6, tint)
-		}
+draw_path :: proc(path: [dynamic]Vec2, tint: raylib.Color, head: Vec2, target: Vec2) {
+	for pos in path {
+		if pos == head || pos == target { continue }
+		cx := c.int(pos.x * CELL_SIZE + CELL_SIZE / 2)
+		cy := c.int(pos.y * CELL_SIZE + CELL_SIZE / 2)
+		raylib.DrawCircle(cx, cy, 6, tint)
 	}
 }
 

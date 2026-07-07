@@ -246,18 +246,21 @@ main :: proc() {
 				draw_npc_snake(npc, assets)
 			}
 			if m.demo_food.x >= 0 {
+				best_len := max(int)
 				best_npc_path: [dynamic]Vec2
 				best_tint: raylib.Color
-				best_len := max(int)
+				best_head: Vec2 = {-1, -1}
+				food_pos := m.demo_food
 				for npc in m.demo_npcs {
-					if len(npc.debug_path) > 2 && len(npc.debug_path) < best_len {
+					if len(npc.debug_path) > 1 && len(npc.debug_path) < best_len {
 						best_len = len(npc.debug_path)
 						best_npc_path = npc.debug_path
 						best_tint = npc.tint
+						best_head = npc.body[len(npc.body) - 1]
 					}
 				}
 				if best_npc_path != nil {
-					draw_path(best_npc_path, best_tint)
+					draw_path(best_npc_path, best_tint, best_head, food_pos)
 				}
 			}
 			raylib.EndMode2D()
@@ -281,17 +284,6 @@ main :: proc() {
 				raylib.DrawText(val, x, y, fs_big, raylib.RAYWHITE)
 				x += raylib.MeasureText(val, fs_big) + 24
 			}
-
-			title: cstring = "SNAKE"
-			title_size: c.int = CELL_SIZE * 3
-			tw := raylib.MeasureText(title, title_size)
-			raylib.DrawText(
-				title,
-				(SCREEN_WIDTH - tw) / 2,
-				CELL_SIZE * 4,
-				title_size,
-				raylib.GREEN,
-			)
 
 			hint: cstring = "Press SPACE to start"
 			hint_size: c.int = CELL_SIZE
@@ -322,7 +314,6 @@ main :: proc() {
 			for npc in s.npc_snakes {
 				draw_npc_snake(npc, assets)
 			}
-			// Draw shortest path to target
 			target: Vec2
 			has_target := false
 			if playing.gate_open && tilemap.has_gate {
@@ -336,35 +327,36 @@ main :: proc() {
 				best_path: [dynamic]Vec2
 				best_tint: raylib.Color
 				best_len := max(int)
-				candidate_paths: [dynamic][dynamic]Vec2
-				defer delete(candidate_paths)
+				best_head: Vec2 = {-1, -1}
+				delete_paths: [dynamic][dynamic]Vec2
 
-				// Player path (only in H-mode)
 				if show_hint {
 					p := find_path(&snake, playing, &tilemap, target)
-					if len(p) > 2 && len(p) < best_len {
+					if len(p) > 1 && len(p) < best_len {
 						best_len = len(p)
 						best_path = p
 						best_tint = raylib.Color{80, 140, 255, 140}
+						best_head = snake.body[len(snake.body) - 1]
 					}
-					append(&candidate_paths, p)
+					append(&delete_paths, p)
 				}
 
 				for npc in s.npc_snakes {
-					if len(npc.debug_path) > 2 && len(npc.debug_path) < best_len {
+					if len(npc.debug_path) > 1 && len(npc.debug_path) < best_len {
 						best_len = len(npc.debug_path)
 						best_path = npc.debug_path
 						best_tint = npc.tint
+						best_head = npc.body[len(npc.body) - 1]
 					}
 				}
 
 				if best_path != nil {
-					draw_path(best_path, best_tint)
+					draw_path(best_path, best_tint, best_head, target)
 				}
-
-				for p in candidate_paths {
+				for p in delete_paths {
 					delete(p)
 				}
+				delete(delete_paths)
 			}
 			raylib.EndMode2D()
 			if s.countdown > 0 {
