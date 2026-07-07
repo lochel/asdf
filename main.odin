@@ -1,6 +1,7 @@
 package main
 
 import "core:c"
+import "core:math/rand"
 import "vendor:raylib"
 
 LEVEL_FILES := []string {
@@ -12,6 +13,37 @@ LEVEL_FILES := []string {
 }
 
 LEVELS: []LevelDef
+
+spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
+	npc_dirs := [3]Direction{.Right, .Left, .Down}
+	npc_offsets := [3]Vec2{{-1, 0}, {1, 0}, {0, -1}}
+	idx := len(m.demo_npcs) % 3
+	pos: Vec2
+	found := false
+	for attempt := 0; attempt < 50; attempt += 1 {
+		p := Vec2{rand.int_max(GRID_WIDTH), rand.int_max(GRID_HEIGHT)}
+		if is_grass(tm, p) && p != tm.start_pos {
+			pos = p
+			found = true
+			break
+		}
+	}
+	if !found {
+		pos = Vec2{5 + idx * 5, 5 + idx * 3}
+	}
+
+	npc_body := make([dynamic]Vec2)
+	npc_dirs_arr := make([dynamic]Direction)
+	append(&npc_body, pos)
+	append(&npc_body, pos + npc_offsets[idx])
+	append(&npc_dirs_arr, npc_dirs[idx])
+	append(&npc_dirs_arr, npc_dirs[idx])
+	append(&m.demo_npcs, NpcSnake{
+		body      = npc_body,
+		head_dirs = npc_dirs_arr,
+		direction = npc_dirs[idx],
+	})
+}
 
 main :: proc() {
 	raylib.SetTraceLogLevel(.NONE)
@@ -60,7 +92,38 @@ main :: proc() {
 
 		switch s in state {
 		case Menu:
+			m := &state.(Menu)
+
+			if !tilemap_loaded {
+				tilemap = load_tilemap(LEVELS[0].file)
+				tilemap_loaded = true
+
+				clear(&snake.body)
+				clear(&snake.head_dirs)
+				s := tilemap.start_pos
+				if !tilemap.has_start {
+					s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
+				}
+				append(&snake.body, s)
+				append(&snake.head_dirs, Direction.Right)
+				snake.direction = .Right
+				snake.next_direction = .Right
+
+				spawn_food(&snake, &m.demo_food, tilemap, nil)
+
+				spawn_demo_npc(m, tilemap)
+				spawn_demo_npc(m, tilemap)
+				spawn_demo_npc(m, tilemap)
+			}
+
 			if raylib.IsKeyPressed(.SPACE) || raylib.IsKeyPressed(.ENTER) || controller_confirm() {
+				for npc in m.demo_npcs {
+					delete(npc.body)
+					delete(npc.head_dirs)
+					delete(npc.debug_path)
+				}
+				clear(&m.demo_npcs)
+
 				state = Playing {
 					lives            = 3,
 					current_level    = 0,
@@ -71,14 +134,36 @@ main :: proc() {
 					splits_triggered = {},
 					countdown        = 4.0,
 					spawning         = 2,
-				foul_foods       = {},
-				foul_apples      = 0,
-				gate_extra       = 0,
-				paused           = false,
-			}
-				tilemap = load_tilemap(LEVELS[0].file)
-				tilemap_loaded = true
+					foul_foods       = {},
+					foul_apples      = 0,
+					gate_extra       = 0,
+					paused           = false,
+				}
 				init_game(&snake, &food, &tilemap)
+				move_timer = 0
+			}
+
+			move_timer += dt
+			if move_timer >= move_delay {
+				demo_play := Playing {
+					npc_snakes = m.demo_npcs,
+					foul_foods = {},
+				}
+				for i := len(m.demo_npcs) - 1; i >= 0; i -= 1 {
+					food_pos := m.demo_food
+					alive, ate := move_npc(&m.demo_npcs[i], food_pos, &snake, &demo_play, false, tilemap)
+					if !alive {
+						delete(m.demo_npcs[i].body)
+						delete(m.demo_npcs[i].head_dirs)
+						delete(m.demo_npcs[i].debug_path)
+						unordered_remove(&m.demo_npcs, i)
+						spawn_demo_npc(m, tilemap)
+						continue
+					}
+					if ate {
+						spawn_food(&snake, &m.demo_food, tilemap, &demo_play)
+					}
+				}
 				move_timer = 0
 			}
 
@@ -147,17 +232,38 @@ main :: proc() {
 
 		switch s in state {
 		case Menu:
-			if tilemap_loaded {
-				raylib.BeginMode2D(camera)
-				draw_background(tilemap, assets, LEVELS[0].gate_score)
-				if len(snake.body) > 0 {
-					draw_food(food, assets)
-					draw_snake(snake, assets)
-				}
-				raylib.EndMode2D()
-				raylib.DrawRectangle(0, 0, SCREEN_WIDTH, WINDOW_HEIGHT, raylib.Color{0, 0, 0, 100})
-			} else {
-				raylib.ClearBackground(raylib.Color{20, 20, 30, 255})
+			m := &state.(Menu)
+			if tilemap.has_start {
+				tilemap.tiles[tilemap.start_pos.y][tilemap.start_pos.x] = .Grass
+			}
+			raylib.BeginMode2D(camera)
+			draw_background(tilemap, assets, LEVELS[0].gate_score)
+			if m.demo_food.x >= 0 {
+				draw_food(m.demo_food, assets)
+			}
+			for npc in m.demo_npcs {
+				draw_npc_snake(npc, assets)
+			}
+			raylib.EndMode2D()
+			if tilemap.has_start {
+				tilemap.tiles[tilemap.start_pos.y][tilemap.start_pos.x] = .Start
+			}
+			raylib.DrawRectangle(0, 0, SCREEN_WIDTH, WINDOW_HEIGHT, raylib.Color{0, 0, 0, 100})
+
+			raylib.DrawRectangle(0, 0, SCREEN_WIDTH, HUD_HEIGHT, raylib.Color{42, 112, 20, 255})
+			raylib.DrawLine(0, HUD_HEIGHT - 1, SCREEN_WIDTH, HUD_HEIGHT - 1, raylib.Color{30, 80, 14, 255})
+
+			fs_big: c.int = 60
+			fs_sml: c.int = 30
+			y: c.int = 20
+			x: c.int = 12
+			for i in 0 ..< min(len(m.demo_npcs), 3) {
+				label := raylib.TextFormat("NPC%d: ", i + 1)
+				raylib.DrawText(label, x, y + 10, fs_sml, raylib.Color{180, 230, 160, 255})
+				x += raylib.MeasureText(label, fs_sml) + 4
+				val := raylib.TextFormat("%d", len(m.demo_npcs[i].body))
+				raylib.DrawText(val, x, y, fs_big, raylib.RAYWHITE)
+				x += raylib.MeasureText(val, fs_big) + 24
 			}
 
 			title: cstring = "SNAKE"
@@ -166,7 +272,7 @@ main :: proc() {
 			raylib.DrawText(
 				title,
 				(SCREEN_WIDTH - tw) / 2,
-				CELL_SIZE * 2,
+				CELL_SIZE * 4,
 				title_size,
 				raylib.GREEN,
 			)
@@ -264,15 +370,23 @@ main :: proc() {
 		save_joy_button_state()
 	}
 
-	if playing, ok := &state.(Playing); ok {
-		for npc in playing.npc_snakes {
+	if p, ok := &state.(Playing); ok {
+		for npc in p.npc_snakes {
 			delete(npc.body)
 			delete(npc.head_dirs)
 			delete(npc.debug_path)
 		}
-		delete(playing.npc_snakes)
-		delete(playing.foul_foods)
-		delete(playing.splits_triggered)
+		delete(p.npc_snakes)
+		delete(p.foul_foods)
+		delete(p.splits_triggered)
+	}
+	if m, ok := &state.(Menu); ok {
+		for npc in m.demo_npcs {
+			delete(npc.body)
+			delete(npc.head_dirs)
+			delete(npc.debug_path)
+		}
+		delete(m.demo_npcs)
 	}
 	delete(snake.body)
 	delete(snake.head_dirs)

@@ -6,7 +6,10 @@ GameState :: union {
 	GameOver,
 }
 
-Menu :: struct {}
+Menu :: struct {
+	demo_npcs: [dynamic]NpcSnake,
+	demo_food: Food,
+}
 
 Playing :: struct {
 	lives:            int,
