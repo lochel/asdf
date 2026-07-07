@@ -48,7 +48,7 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 
 main :: proc() {
 	raylib.SetTraceLogLevel(.NONE)
-	raylib.SetConfigFlags({.VSYNC_HINT})
+	raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE})
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
 	raylib.SetExitKey(.KEY_NULL)
@@ -62,6 +62,9 @@ main :: proc() {
 
 	assets := load_assets()
 	defer unload_assets(assets)
+
+	render_tex := raylib.LoadRenderTexture(SCREEN_WIDTH, WINDOW_HEIGHT)
+	defer raylib.UnloadRenderTexture(render_tex)
 
 	LEVELS = make([]LevelDef, len(LEVEL_FILES))
 	for f, i in LEVEL_FILES {
@@ -83,6 +86,7 @@ main :: proc() {
 	move_timer: f32 = 0
 	move_delay: f32 = 0.2
 	frame_count: u64 = 0
+	fullscreen := false
 
 	tilemap_loaded := false
 	tilemap: Tilemap
@@ -90,6 +94,11 @@ main :: proc() {
 	for !raylib.WindowShouldClose() {
 		dt := raylib.GetFrameTime()
 		read_joystick()
+
+		if raylib.IsKeyPressed(.F) {
+			fullscreen = !fullscreen
+			raylib.ToggleFullscreen()
+		}
 
 		switch s in state {
 		case Menu:
@@ -222,7 +231,8 @@ main :: proc() {
 
 		frame_count += 1
 
-		raylib.BeginDrawing()
+		raylib.BeginTextureMode(render_tex)
+		raylib.ClearBackground(raylib.BLACK)
 
 		camera := raylib.Camera2D {
 			offset   = {0, f32(HUD_HEIGHT)},
@@ -384,6 +394,30 @@ main :: proc() {
 		}
 
 		draw_debug_overlay(frame_count)
+		raylib.EndTextureMode()
+
+		raylib.BeginDrawing()
+		win_w := raylib.GetScreenWidth()
+		win_h := raylib.GetScreenHeight()
+		if fullscreen {
+			m := raylib.GetCurrentMonitor()
+			win_w = raylib.GetMonitorWidth(m)
+			win_h = raylib.GetMonitorHeight(m)
+		}
+		sw := f32(win_w)
+		sh := f32(win_h)
+		scale := min(sw / f32(SCREEN_WIDTH), sh / f32(WINDOW_HEIGHT))
+		dw := f32(SCREEN_WIDTH) * scale
+		dh := f32(WINDOW_HEIGHT) * scale
+		dx := (sw - dw) / 2
+		dy := (sh - dh) / 2
+		raylib.ClearBackground(raylib.BLACK)
+		raylib.DrawTexturePro(
+			render_tex.texture,
+			raylib.Rectangle{0, 0, f32(SCREEN_WIDTH), -f32(WINDOW_HEIGHT)},
+			raylib.Rectangle{dx, dy, dw, dh},
+			{0, 0}, 0, raylib.WHITE,
+		)
 		raylib.EndDrawing()
 		save_joy_button_state()
 	}
