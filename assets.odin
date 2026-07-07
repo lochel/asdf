@@ -71,21 +71,47 @@ unload_sounds :: proc(sounds: Sounds) {
 }
 
 load_sprites :: proc() -> Sprites {
-	load_tex :: proc(path: cstring) -> raylib.Texture2D {
-		img := raylib.LoadImage(path)
+	color_tex :: proc(color: raylib.Color) -> raylib.Texture2D {
+		img := raylib.GenImageColor(CELL_SIZE, CELL_SIZE, color)
 		defer raylib.UnloadImage(img)
-		raylib.ImageResizeNN(&img, CELL_SIZE, CELL_SIZE)
 		tex := raylib.LoadTextureFromImage(img)
 		raylib.SetTextureFilter(tex, .POINT)
 		return tex
 	}
 
-	load_tinted_tex :: proc(path: cstring, tint: raylib.Color) -> raylib.Texture2D {
+	load_tex :: proc(path: cstring) -> raylib.Texture2D {
+		if !raylib.FileExists(path) {
+			return color_tex(raylib.MAGENTA)
+		}
 		img := raylib.LoadImage(path)
+		if !raylib.IsImageValid(img) {
+			return color_tex(raylib.MAGENTA)
+		}
+		defer raylib.UnloadImage(img)
+		raylib.ImageResizeNN(&img, CELL_SIZE, CELL_SIZE)
+		tex := raylib.LoadTextureFromImage(img)
+		if !raylib.IsTextureValid(tex) {
+			return color_tex(raylib.MAGENTA)
+		}
+		raylib.SetTextureFilter(tex, .POINT)
+		return tex
+	}
+
+	load_tinted_tex :: proc(path: cstring, tint: raylib.Color) -> raylib.Texture2D {
+		if !raylib.FileExists(path) {
+			return color_tex(tint)
+		}
+		img := raylib.LoadImage(path)
+		if !raylib.IsImageValid(img) {
+			return color_tex(tint)
+		}
 		defer raylib.UnloadImage(img)
 		raylib.ImageResizeNN(&img, CELL_SIZE, CELL_SIZE)
 		raylib.ImageColorTint(&img, tint)
 		tex := raylib.LoadTextureFromImage(img)
+		if !raylib.IsTextureValid(tex) {
+			return color_tex(tint)
+		}
 		raylib.SetTextureFilter(tex, .POINT)
 		return tex
 	}
@@ -110,14 +136,6 @@ load_sprites :: proc() -> Sprites {
 	s.body_topright = load_tex("assets/graphics/body_topright.png")
 	s.body_bottomleft = load_tex("assets/graphics/body_bottomleft.png")
 	s.body_bottomright = load_tex("assets/graphics/body_bottomright.png")
-
-	color_tex :: proc(color: raylib.Color) -> raylib.Texture2D {
-		img := raylib.GenImageColor(CELL_SIZE, CELL_SIZE, color)
-		defer raylib.UnloadImage(img)
-		tex := raylib.LoadTextureFromImage(img)
-		raylib.SetTextureFilter(tex, .POINT)
-		return tex
-	}
 
 	s.grass = color_tex({46, 90, 30, 255})
 	s.wall = color_tex({80, 70, 60, 255})

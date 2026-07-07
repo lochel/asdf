@@ -64,6 +64,7 @@ main :: proc() {
 	defer unload_assets(assets)
 
 	render_tex := raylib.LoadRenderTexture(SCREEN_WIDTH, WINDOW_HEIGHT)
+	use_render_tex := raylib.IsRenderTextureValid(render_tex)
 	defer raylib.UnloadRenderTexture(render_tex)
 
 	LEVELS = make([]LevelDef, len(LEVEL_FILES))
@@ -205,7 +206,11 @@ main :: proc() {
 
 		frame_count += 1
 
-		raylib.BeginTextureMode(render_tex)
+		if use_render_tex {
+			raylib.BeginTextureMode(render_tex)
+		} else {
+			raylib.BeginDrawing()
+		}
 		raylib.ClearBackground(raylib.BLACK)
 
 		camera := raylib.Camera2D {
@@ -402,26 +407,31 @@ main :: proc() {
 		}
 
 		draw_debug_overlay(frame_count)
-		raylib.EndTextureMode()
 
-		raylib.BeginDrawing()
-		sw := f32(raylib.GetRenderWidth())
-		sh := f32(raylib.GetRenderHeight())
-		tw := f32(SCREEN_WIDTH)
-		th := f32(WINDOW_HEIGHT)
-		scale := min(sw / tw, sh / th)
-		dw := tw * scale
-		dh := th * scale
-		dx := (sw - dw) / 2
-		dy := (sh - dh) / 2
-		raylib.ClearBackground(raylib.BLACK)
-		raylib.DrawTexturePro(
-			render_tex.texture,
-			raylib.Rectangle{0, 0, tw, -th},
-			raylib.Rectangle{dx, dy, dw, dh},
-			{0, 0}, 0, raylib.WHITE,
-		)
-		raylib.EndDrawing()
+		if use_render_tex {
+			raylib.EndTextureMode()
+
+			raylib.BeginDrawing()
+			sw := f32(raylib.GetRenderWidth())
+			sh := f32(raylib.GetRenderHeight())
+			tw := f32(SCREEN_WIDTH)
+			th := f32(WINDOW_HEIGHT)
+			scale := min(sw / tw, sh / th)
+			dw := tw * scale
+			dh := th * scale
+			dx := (sw - dw) / 2
+			dy := (sh - dh) / 2
+			raylib.ClearBackground(raylib.BLACK)
+			raylib.DrawTexturePro(
+				render_tex.texture,
+				raylib.Rectangle{0, 0, tw, -th},
+				raylib.Rectangle{dx, dy, dw, dh},
+				{0, 0}, 0, raylib.WHITE,
+			)
+			raylib.EndDrawing()
+		} else {
+			raylib.EndDrawing()
+		}
 		save_joy_button_state()
 	}
 
