@@ -55,6 +55,21 @@ main :: proc() {
 	raylib.SetTargetFPS(600)
 	defer raylib.CloseWindow()
 
+	window_w := c.int(SCREEN_WIDTH)
+	window_h := c.int(WINDOW_HEIGHT)
+	when ODIN_OS == .Windows {
+		monitor := raylib.GetCurrentMonitor()
+		monitor_w := raylib.GetMonitorWidth(monitor)
+		monitor_h := raylib.GetMonitorHeight(monitor)
+		max_w := max(c.int(640), monitor_w - 80)
+		max_h := max(c.int(480), monitor_h - 120)
+		window_w = min(window_w, max_w)
+		window_h = min(window_h, max_h)
+		raylib.SetWindowMinSize(640, 480)
+		raylib.SetWindowSize(window_w, window_h)
+		raylib.RestoreWindow()
+	}
+
 	raylib.InitAudioDevice()
 	defer raylib.CloseAudioDevice()
 
@@ -89,10 +104,23 @@ main :: proc() {
 	frame_count: u64 = 0
 	tilemap_loaded := false
 	tilemap: Tilemap
+	window_watchdog: f32 = 3.0
 
 	for !raylib.WindowShouldClose() {
 		dt := raylib.GetFrameTime()
 		read_joystick()
+
+		when ODIN_OS == .Windows {
+			if window_watchdog > 0 {
+				window_watchdog -= dt
+				if raylib.IsWindowHidden() || raylib.IsWindowMinimized() {
+					raylib.RestoreWindow()
+					if !raylib.IsWindowFullscreen() {
+						raylib.SetWindowSize(window_w, window_h)
+					}
+				}
+			}
+		}
 
 		if raylib.IsKeyPressed(.F) {
 			raylib.ToggleFullscreen()
