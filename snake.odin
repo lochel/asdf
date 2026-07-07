@@ -942,8 +942,12 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 		raylib.DrawTexture(assets.sprites.glow, gx, gy, glow_tint)
 	}
 
-	raylib.SetShaderValue(assets.sprites.npc_glow_shader, assets.sprites.npc_glow_time_loc, &t, .FLOAT)
-	raylib.BeginShaderMode(assets.sprites.npc_glow_shader)
+	if assets.sprites.npc_glow_shader_valid {
+		if assets.sprites.npc_glow_time_loc >= 0 {
+			raylib.SetShaderValue(assets.sprites.npc_glow_shader, assets.sprites.npc_glow_time_loc, &t, .FLOAT)
+		}
+		raylib.BeginShaderMode(assets.sprites.npc_glow_shader)
+	}
 
 	for i in 0 ..< n {
 		pos := npc.body[i]
@@ -959,7 +963,9 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 		}
 	}
 
-	raylib.EndShaderMode()
+	if assets.sprites.npc_glow_shader_valid {
+		raylib.EndShaderMode()
+	}
 }
 
 draw_food :: proc(food: Food, assets: Assets) {
