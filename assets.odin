@@ -1,6 +1,9 @@
 package main
 
+import "core:c"
 import "vendor:raylib"
+
+GLOW_SIZE :: CELL_SIZE * 2
 
 Sprites :: struct {
 	apple:            raylib.Texture2D,
@@ -16,6 +19,11 @@ Sprites :: struct {
 	grass:            raylib.Texture2D,
 	wall:             raylib.Texture2D,
 	puddle:           raylib.Texture2D,
+	grass_shader:        raylib.Shader,
+	grass_time_loc:      c.int,
+	npc_glow_shader:     raylib.Shader,
+	npc_glow_time_loc:   c.int,
+	glow:               raylib.Texture2D,
 }
 
 Sounds :: struct {
@@ -115,6 +123,16 @@ load_sprites :: proc() -> Sprites {
 	s.wall = color_tex({80, 70, 60, 255})
 	s.puddle = color_tex({30, 100, 180, 200})
 
+	s.grass_shader = raylib.LoadShader(nil, "assets/shaders/grass.frag")
+	s.grass_time_loc = raylib.GetShaderLocation(s.grass_shader, "u_time")
+	s.npc_glow_shader = raylib.LoadShader(nil, "assets/shaders/npc_glow.frag")
+	s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
+
+	glow_img := raylib.GenImageGradientRadial(GLOW_SIZE, c.int(GLOW_SIZE), 0.3, raylib.WHITE, raylib.BLANK)
+	defer raylib.UnloadImage(glow_img)
+	s.glow = raylib.LoadTextureFromImage(glow_img)
+	raylib.SetTextureFilter(s.glow, .POINT)
+
 	return s
 }
 
@@ -134,5 +152,8 @@ unload_sprites :: proc(s: Sprites) {
 	raylib.UnloadTexture(s.grass)
 	raylib.UnloadTexture(s.wall)
 	raylib.UnloadTexture(s.puddle)
+	raylib.UnloadShader(s.grass_shader)
+	raylib.UnloadShader(s.npc_glow_shader)
+	raylib.UnloadTexture(s.glow)
 }
 

@@ -215,12 +215,24 @@ puddle_tint :: proc(pair_idx: int) -> raylib.Color {
 }
 
 draw_tilemap :: proc(tm: Tilemap, assets: Assets, remaining: int) {
+	t := f32(raylib.GetTime())
+	t = t - f32(int(t / 1000)) * 1000
+	raylib.SetShaderValue(assets.sprites.grass_shader, assets.sprites.grass_time_loc, &t, .FLOAT)
+	raylib.BeginShaderMode(assets.sprites.grass_shader)
+	for y in 0 ..< tm.height {
+		for x in 0 ..< tm.width {
+			if tm.tiles[y][x] == .Grass {
+				raylib.DrawTexture(assets.sprites.grass, c.int(x * CELL_SIZE), c.int(y * CELL_SIZE), raylib.WHITE)
+			}
+		}
+	}
+	raylib.EndShaderMode()
+
 	for y in 0 ..< tm.height {
 		for x in 0 ..< tm.width {
 			pos := Vec2{x, y}
 			switch tm.tiles[y][x] {
 			case .Grass:
-				raylib.DrawTexture(assets.sprites.grass, c.int(x * CELL_SIZE), c.int(y * CELL_SIZE), raylib.WHITE)
 			case .Wall:
 				raylib.DrawTexture(assets.sprites.wall, c.int(x * CELL_SIZE), c.int(y * CELL_SIZE), raylib.WHITE)
 			case .Puddle:

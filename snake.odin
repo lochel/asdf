@@ -1,6 +1,7 @@
 package main
 
 import "core:c"
+import "core:math"
 import "core:math/rand"
 import "core:strings"
 import "vendor:raylib"
@@ -948,6 +949,24 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 	tint := raylib.Color{255, 100, 100, 255}
 	head_idx := n - 1
 
+	t := f32(raylib.GetTime())
+	t = t - f32(int(t / 1000)) * 1000
+
+	pulse := f32(math.sin(f64(t) * 3.0) * 0.3 + 0.7)
+	glow_alpha := u8(pulse * 60)
+	glow_tint := raylib.Color{200, 60, 60, glow_alpha}
+	glow_offset := c.int((GLOW_SIZE - CELL_SIZE) / 2)
+
+	for i in 0 ..< n {
+		pos := npc.body[i]
+		gx := c.int(pos.x * CELL_SIZE) - glow_offset
+		gy := c.int(pos.y * CELL_SIZE) - glow_offset
+		raylib.DrawTexture(assets.sprites.glow, gx, gy, glow_tint)
+	}
+
+	raylib.SetShaderValue(assets.sprites.npc_glow_shader, assets.sprites.npc_glow_time_loc, &t, .FLOAT)
+	raylib.BeginShaderMode(assets.sprites.npc_glow_shader)
+
 	for i in 0 ..< n {
 		pos := npc.body[i]
 		if i == head_idx {
@@ -961,6 +980,8 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 			raylib.DrawTexture(tex, c.int(pos.x * CELL_SIZE), c.int(pos.y * CELL_SIZE), tint)
 		}
 	}
+
+	raylib.EndShaderMode()
 
 	if len(npc.debug_path) > 2 {
 		for pos in npc.debug_path[1:len(npc.debug_path) - 1] {
