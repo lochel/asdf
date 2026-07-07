@@ -471,6 +471,7 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets
 		head_dirs = npc_dirs,
 		direction = npc_dirs[len(npc_dirs) - 1],
 		stun      = 3,
+		tint      = npc_tint(len(playing.npc_snakes)),
 	}
 	append(&playing.npc_snakes, npc)
 }
@@ -946,7 +947,7 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 	n := len(npc.body)
 	if n == 0 do return
 
-	tint := raylib.Color{255, 100, 100, 255}
+	tint := npc.tint
 	head_idx := n - 1
 
 	t := f32(raylib.GetTime())

@@ -42,6 +42,7 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 		body      = npc_body,
 		head_dirs = npc_dirs_arr,
 		direction = npc_dirs[idx],
+		tint      = npc_tint(idx),
 	})
 }
 
