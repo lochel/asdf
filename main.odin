@@ -2,7 +2,6 @@ package main
 
 import "core:c"
 import "core:math/rand"
-import "core:os"
 import "vendor:raylib"
 
 LEVEL_FILES := []string {
@@ -14,44 +13,6 @@ LEVEL_FILES := []string {
 }
 
 LEVELS: []LevelDef
-
-ensure_runtime_working_directory :: proc() {
-	if os.exists(LEVEL_FILES[0]) {
-		return
-	}
-
-	exe_dir, err := os.get_executable_directory(context.allocator)
-	if err != nil {
-		return
-	}
-	defer delete(exe_dir)
-
-	old_wd, old_wd_err := os.get_working_directory(context.allocator)
-	if old_wd_err == nil {
-		defer delete(old_wd)
-	}
-
-	candidates := make([dynamic]string)
-	defer delete(candidates)
-	append(&candidates, exe_dir)
-
-	if parent, _ := os.split_path(exe_dir); parent != "" && parent != "." {
-		append(&candidates, parent)
-		if grandparent, _ := os.split_path(parent); grandparent != "" && grandparent != "." {
-			append(&candidates, grandparent)
-		}
-	}
-
-	for dir in candidates {
-		if os.set_working_directory(dir) == nil && os.exists(LEVEL_FILES[0]) {
-			return
-		}
-	}
-
-	if old_wd_err == nil {
-		_ = os.set_working_directory(old_wd)
-	}
-}
 
 spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 	npc_dirs := [3]Direction{.Right, .Left, .Down}
@@ -86,8 +47,6 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 }
 
 main :: proc() {
-	ensure_runtime_working_directory()
-
 	raylib.SetTraceLogLevel(.NONE)
 	raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE})
 
