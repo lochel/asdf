@@ -97,8 +97,11 @@ main :: proc() {
 
 		if raylib.IsKeyPressed(.F) {
 			fullscreen = !fullscreen
-			raylib.ToggleFullscreen()
-			if !fullscreen {
+			if fullscreen {
+				m := raylib.GetCurrentMonitor()
+				raylib.SetWindowSize(raylib.GetMonitorWidth(m), raylib.GetMonitorHeight(m))
+				raylib.SetWindowPosition(0, 0)
+			} else {
 				raylib.SetWindowSize(SCREEN_WIDTH, WINDOW_HEIGHT)
 			}
 		}
@@ -400,20 +403,8 @@ main :: proc() {
 		raylib.EndTextureMode()
 
 		raylib.BeginDrawing()
-		sw: f32
-		sh: f32
-		if fullscreen {
-			m := raylib.GetCurrentMonitor()
-			mw := raylib.GetMonitorWidth(m)
-			mh := raylib.GetMonitorHeight(m)
-			if mw > 0 && mh > 0 {
-				sw, sh = f32(mw), f32(mh)
-			} else {
-				sw, sh = f32(raylib.GetScreenWidth()), f32(raylib.GetScreenHeight())
-			}
-		} else {
-			sw, sh = f32(raylib.GetScreenWidth()), f32(raylib.GetScreenHeight())
-		}
+		sw := f32(raylib.GetScreenWidth())
+		sh := f32(raylib.GetScreenHeight())
 		tw := f32(SCREEN_WIDTH)
 		th := f32(WINDOW_HEIGHT)
 		scale := min(sw / tw, sh / th)
