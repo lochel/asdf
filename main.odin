@@ -1,6 +1,7 @@
 package main
 
 import "core:c"
+import "core:fmt"
 import "core:math/rand"
 import "vendor:raylib"
 
@@ -47,10 +48,17 @@ spawn_demo_npc :: proc(m: ^Menu, tm: Tilemap) {
 }
 
 main :: proc() {
+	fmt.printfln("[dbg] main: startup")
 	raylib.SetTraceLogLevel(.NONE)
-	raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE})
+	window_flags := raylib.ConfigFlags{.VSYNC_HINT, .WINDOW_RESIZABLE}
+	when ODIN_OS == .Windows {
+		window_flags = {.VSYNC_HINT}
+	}
+	raylib.SetConfigFlags(window_flags)
+	fmt.printfln("[dbg] main: config flags set")
 
 	raylib.InitWindow(SCREEN_WIDTH, WINDOW_HEIGHT, "Snake")
+	fmt.printfln("[dbg] main: window initialized requested=%dx%d", SCREEN_WIDTH, WINDOW_HEIGHT)
 	raylib.SetExitKey(.KEY_NULL)
 	raylib.SetTargetFPS(600)
 	defer raylib.CloseWindow()
@@ -65,26 +73,54 @@ main :: proc() {
 		max_h := max(c.int(480), monitor_h - 120)
 		window_w = min(window_w, max_w)
 		window_h = min(window_h, max_h)
-		raylib.SetWindowMinSize(640, 480)
 		raylib.SetWindowSize(window_w, window_h)
+		window_x := max(c.int(0), (monitor_w - window_w) / 2)
+		window_y := max(c.int(0), (monitor_h - window_h) / 2)
+		raylib.SetWindowPosition(window_x, window_y)
+		raylib.SetWindowFocused()
 		raylib.RestoreWindow()
+		fmt.printfln(
+			"[dbg] main: windows placement monitor=%d monitor=%dx%d window=%dx%d pos=%d,%d",
+			monitor,
+			monitor_w,
+			monitor_h,
+			window_w,
+			window_h,
+			window_x,
+			window_y,
+		)
 	}
 
 	raylib.InitAudioDevice()
+	fmt.printfln("[dbg] main: audio initialized ready=%v", raylib.IsAudioDeviceReady())
 	defer raylib.CloseAudioDevice()
 
 	defer close_joystick()
 
 	assets := load_assets()
+	fmt.printfln(
+		"[dbg] main: assets loaded shaders grass=%v npc=%v",
+		assets.sprites.grass_shader_valid,
+		assets.sprites.npc_glow_shader_valid,
+	)
 	defer unload_assets(assets)
 
 	render_tex := raylib.LoadRenderTexture(SCREEN_WIDTH, WINDOW_HEIGHT)
 	use_render_tex := raylib.IsRenderTextureValid(render_tex)
+	when ODIN_OS == .Windows {
+		use_render_tex = false
+	}
+	fmt.printfln(
+		"[dbg] main: render texture valid=%v using=%v",
+		raylib.IsRenderTextureValid(render_tex),
+		use_render_tex,
+	)
 	defer raylib.UnloadRenderTexture(render_tex)
 
 	LEVELS = make([]LevelDef, len(LEVEL_FILES))
 	for f, i in LEVEL_FILES {
 		LEVELS[i] = load_level_meta(f)
+		fmt.printfln("[dbg] main: level meta loaded index=%d path=%s", i, f)
 	}
 	defer {
 		for l in LEVELS {
@@ -104,22 +140,45 @@ main :: proc() {
 	frame_count: u64 = 0
 	tilemap_loaded := false
 	tilemap: Tilemap
-	window_watchdog: f32 = 3.0
+	log_timer: f32 = 0
+	fmt.printfln("[dbg] main: entering game loop")
 
 	for !raylib.WindowShouldClose() {
 		dt := raylib.GetFrameTime()
 		read_joystick()
+		log_timer += dt
 
 		when ODIN_OS == .Windows {
-			if window_watchdog > 0 {
-				window_watchdog -= dt
-				if raylib.IsWindowHidden() || raylib.IsWindowMinimized() {
-					raylib.RestoreWindow()
-					if !raylib.IsWindowFullscreen() {
-						raylib.SetWindowSize(window_w, window_h)
-					}
+			if raylib.IsWindowHidden() || raylib.IsWindowMinimized() {
+				fmt.printfln(
+					"[dbg] loop: window hidden=%v minimized=%v fullscreen=%v -> restoring",
+					raylib.IsWindowHidden(),
+					raylib.IsWindowMinimized(),
+					raylib.IsWindowFullscreen(),
+				)
+				raylib.SetWindowFocused()
+				raylib.RestoreWindow()
+				if !raylib.IsWindowFullscreen() {
+					raylib.SetWindowSize(window_w, window_h)
 				}
 			}
+		}
+
+		if log_timer >= 1.0 {
+			wp := raylib.GetWindowPosition()
+			fmt.printfln(
+				"[dbg] loop: frame=%d dt=%.4f hidden=%v minimized=%v fullscreen=%v focused=%v pos=(%.0f,%.0f) render_tex=%v",
+				frame_count,
+				dt,
+				raylib.IsWindowHidden(),
+				raylib.IsWindowMinimized(),
+				raylib.IsWindowFullscreen(),
+				raylib.IsWindowFocused(),
+				wp.x,
+				wp.y,
+				use_render_tex,
+			)
+			log_timer = 0
 		}
 
 		if raylib.IsKeyPressed(.F) {

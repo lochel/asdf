@@ -143,12 +143,17 @@ load_sprites :: proc() -> Sprites {
 	s.wall = color_tex({80, 70, 60, 255})
 	s.puddle = color_tex({30, 100, 180, 200})
 
-	s.grass_shader = raylib.LoadShader(nil, "assets/shaders/grass.frag")
-	s.grass_time_loc = raylib.GetShaderLocation(s.grass_shader, "u_time")
-	s.grass_shader_valid = raylib.IsShaderValid(s.grass_shader)
-	s.npc_glow_shader = raylib.LoadShader(nil, "assets/shaders/npc_glow.frag")
-	s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
-	s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
+	when ODIN_OS == .Windows {
+		s.grass_shader_valid = false
+		s.npc_glow_shader_valid = false
+	} else {
+		s.grass_shader = raylib.LoadShader(nil, "assets/shaders/grass.frag")
+		s.grass_time_loc = raylib.GetShaderLocation(s.grass_shader, "u_time")
+		s.grass_shader_valid = raylib.IsShaderValid(s.grass_shader)
+		s.npc_glow_shader = raylib.LoadShader(nil, "assets/shaders/npc_glow.frag")
+		s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
+		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
+	}
 
 	glow_img := raylib.GenImageGradientRadial(GLOW_SIZE, c.int(GLOW_SIZE), 0.3, raylib.WHITE, raylib.BLANK)
 	defer raylib.UnloadImage(glow_img)
