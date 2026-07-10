@@ -110,7 +110,20 @@ run :: proc(e: ^Engine_Context, first: string) {
 		}
 
 		if e.current != nil && e.current.update != nil {
-			e.current.update(e.current, dt)
+			if e.current.fixed_step > 0 {
+				e.current.update_acc += dt
+				step := e.current.fixed_step
+				max_acc := step * 5
+				if e.current.update_acc > max_acc {
+					e.current.update_acc = max_acc
+				}
+				for e.current.update_acc >= step {
+					e.current.update(e.current, step)
+					e.current.update_acc -= step
+				}
+			} else {
+				e.current.update(e.current, dt)
+			}
 		}
 		if e.trans.active && e.next != nil && e.next.update != nil {
 			e.next.update(e.next, dt)

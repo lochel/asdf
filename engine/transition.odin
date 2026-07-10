@@ -22,6 +22,7 @@ update_transition :: proc(e: ^Engine_Context, dt: f32) {
 	if e.trans.timer >= e.trans.duration {
 		e.trans.active = false
 		e.current = e.next
+		e.current.update_acc = 0
 		e.next = nil
 		if e.current != nil && e.current.enter != nil {
 			e.current.enter(e.current)
@@ -52,7 +53,12 @@ render_transition :: proc(e: ^Engine_Context, dst: rl.Rectangle) {
 			rl.DrawTexturePro(e.current.target.texture, src, dst, {}, 0, rl.WHITE)
 		}
 		if e.next != nil {
-			dst := rl.Rectangle{-(1.0 - progress) * dst.width + dst.x, dst.y, dst.width, dst.height}
+			dst := rl.Rectangle {
+				-(1.0 - progress) * dst.width + dst.x,
+				dst.y,
+				dst.width,
+				dst.height,
+			}
 			rl.DrawTexturePro(e.next.target.texture, src, dst, {}, 0, rl.WHITE)
 		}
 
