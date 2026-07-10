@@ -4,10 +4,11 @@ import "core:c"
 import "engine"
 import rl "vendor:raylib"
 
-FloatingLabel :: struct {
+ FloatingLabel :: struct {
 	pos:   Vec2,
 	timer: f32,
 	life:  f32,
+	text:  cstring,
 }
 
 Game_Context :: struct {
@@ -98,6 +99,7 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 		foul_apples      = 0,
 		gate_extra       = 0,
 		paused           = false,
+		pending_labels   = {},
 	}
 
 	init_game(&gd.snake, &gd.food, &gd.tilemap)
@@ -159,9 +161,6 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 		}
 	}
 
-	prev_score := playing.score
-	food_before := gd.food
-
 	if playing.countdown > 0 {
 		playing.countdown -= dt
 		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, true) {
@@ -179,9 +178,10 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 		}
 	}
 
-	if playing.score > prev_score && food_before.x >= 0 {
-		append(&gd.labels, FloatingLabel{pos = food_before, life = 0.8})
+	for pl in playing.pending_labels {
+		append(&gd.labels, FloatingLabel{pos = pl.pos, life = 0.8, text = pl.text})
 	}
+	clear(&playing.pending_labels)
 }
 
 game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
@@ -222,7 +222,7 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	draw_hud(playing)
 	rl.BeginMode2D(camera)
 	gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
-	remaining := max(0, gate_threshold - playing.score)
+	remaining := max(0, gate_threshold - playing.apples)
 	draw_background(gd.tilemap, assets_global, remaining)
 	draw_food(gd.food, assets_global)
 	for ff in playing.foul_foods {
@@ -241,8 +241,8 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		fx := f32(label.pos.x * CELL_SIZE + CELL_SIZE / 2)
 		fy := f32(label.pos.y * CELL_SIZE + CELL_SIZE / 2) + y_off
 		font_size := c.int(CELL_SIZE)
-		tw := rl.MeasureText("+1", font_size)
-		rl.DrawText("+1", c.int(fx) - tw / 2, c.int(fy) - font_size / 2, font_size, rl.Color{255, 255, 100, alpha})
+		tw := rl.MeasureText(label.text, font_size)
+		rl.DrawText(label.text, c.int(fx) - tw / 2, c.int(fy) - font_size / 2, font_size, rl.Color{255, 255, 100, alpha})
 	}
 	target: Vec2
 	has_target := false

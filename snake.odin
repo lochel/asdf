@@ -153,11 +153,12 @@ update :: proc(
 		if new_head == food^ {
 			playing.apples += 1
 			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+			append(&playing.pending_labels, PendingLabel{pos = new_head, text = "+1"})
 			raylib.PlaySound(assets^.sounds.eat)
 
 			if !playing.gate_open {
 				gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
-				playing.gate_open = playing.score >= gate_threshold
+				playing.gate_open = playing.apples >= gate_threshold
 				if playing.gate_open {
 					food^ = {-1, -1}
 					raylib.PlaySound(assets^.sounds.gate_open)
@@ -229,6 +230,7 @@ update :: proc(
 				if npc_head == seg {
 					playing.npc_kills += 1
 					playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+					append(&playing.pending_labels, PendingLabel{pos = npc_head, text = "+10"})
 					delete(playing.npc_snakes[i].body)
 					delete(playing.npc_snakes[i].head_dirs)
 					delete(playing.npc_snakes[i].debug_path)
@@ -312,6 +314,7 @@ player_died :: proc(
 	}
 
 	clear(&playing.foul_foods)
+	clear(&playing.pending_labels)
 	playing.foul_apples = 0
 	input_used = false
 
@@ -332,12 +335,12 @@ player_died :: proc(
 	playing.spawning = 2
 	food^ = {-1, -1}
 
-	playing.gate_open = playing.score >= LEVELS[playing.current_level].gate_score
+	playing.gate_open = playing.apples >= LEVELS[playing.current_level].gate_score
 	if playing.gate_open {
 		playing.gate_extra += 1
 	}
 	playing.gate_open =
-		playing.score >= LEVELS[playing.current_level].gate_score + playing.gate_extra
+		playing.apples >= LEVELS[playing.current_level].gate_score + playing.gate_extra
 
 	return false
 }
@@ -398,6 +401,7 @@ advance_level :: proc(
 	playing.countdown = 4.0
 	playing.spawning = max(0, preserved_len - 1)
 	clear(&playing.foul_foods)
+	clear(&playing.pending_labels)
 	playing.foul_apples = 0
 
 	playing.gate_open = false
@@ -837,6 +841,7 @@ move_npc :: proc(
 			unordered_remove(&playing.foul_foods, i)
 			playing.foul_kills += 1
 			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+			append(&playing.pending_labels, PendingLabel{pos = new_head, text = "+5"})
 			return false, false
 		}
 	}
@@ -1035,7 +1040,7 @@ draw_hud :: proc(playing: Playing) {
 			sx := x_g + c.int(i) * sp
 			sy := y + 10
 
-			collected := playing.score > i
+			collected := playing.apples > i
 
 			is_split := false
 			for s in level.split_scores {

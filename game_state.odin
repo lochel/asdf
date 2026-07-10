@@ -1,5 +1,10 @@
 package main
 
+PendingLabel :: struct {
+	pos:  Vec2,
+	text: cstring,
+}
+
 Playing :: struct {
 	lives:            int,
 	current_level:    int,
@@ -18,6 +23,7 @@ Playing :: struct {
 	foul_apples:      int,
 	gate_extra:       int,
 	paused:           bool,
+	pending_labels:   [dynamic]PendingLabel,
 }
 
 GameOver :: struct {
