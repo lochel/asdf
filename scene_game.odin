@@ -9,7 +9,7 @@ import "core:strings"
 
 import rl "vendor:raylib"
 
- FloatingLabel :: struct {
+FloatingLabel :: struct {
 	pos:   Vec2,
 	timer: f32,
 	life:  f32,
@@ -18,16 +18,16 @@ import rl "vendor:raylib"
 
 Game_Context :: struct {
 	using scene:    engine.Scene_Context,
-	playing:       Playing,
-	snake:         Snake,
-	food:          Food,
-	tilemap:       Tilemap,
+	playing:        Playing,
+	snake:          Snake,
+	food:           Food,
+	tilemap:        Tilemap,
 	tilemap_loaded: bool,
-	game_over:     bool,
-	final_score:   int,
-	prev_level:    int,
-	entered:       bool,
-	labels:        [dynamic]FloatingLabel,
+	game_over:      bool,
+	final_score:    int,
+	prev_level:     int,
+	entered:        bool,
+	labels:         [dynamic]FloatingLabel,
 }
 
 game_init :: proc(ctx: ^engine.Scene_Context) {
@@ -127,10 +127,13 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 
 	playing := &gd.playing
 
-	if rl.IsKeyPressed(.ESCAPE) || rl.IsKeyPressed(.P) || gp_button_pressed(.MIDDLE_LEFT, 0) || joy_button_pressed(7) {
+	if rl.IsKeyPressed(.ESCAPE) ||
+	   rl.IsKeyPressed(.P) ||
+	   gp_button_pressed(.MIDDLE_LEFT, 0) ||
+	   joy_button_pressed(7) {
 		playing.paused = !playing.paused
 	}
-	if rl.IsKeyPressed(.H) { show_hint = !show_hint }
+	if rl.IsKeyPressed(.H) {show_hint = !show_hint}
 	if !playing.paused && playing.countdown <= 0 {
 		handle_input(&gd.snake)
 		if playing.foul_apples > 0 {
@@ -248,7 +251,13 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		fy := f32(label.pos.y * CELL_SIZE + CELL_SIZE / 2) + y_off
 		font_size := c.int(CELL_SIZE)
 		tw := rl.MeasureText(label.text, font_size)
-		rl.DrawText(label.text, c.int(fx) - tw / 2, c.int(fy) - font_size / 2, font_size, rl.Color{255, 255, 100, alpha})
+		rl.DrawText(
+			label.text,
+			c.int(fx) - tw / 2,
+			c.int(fy) - font_size / 2,
+			font_size,
+			rl.Color{255, 255, 100, alpha},
+		)
 	}
 	target: Vec2
 	has_target := false
@@ -302,10 +311,22 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		rl.DrawRectangle(0, HUD_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, rl.Color{0, 0, 0, 120})
 		fs1 := CELL_SIZE * 2
 		tw1 := rl.MeasureText("PAUSED", c.int(fs1))
-		rl.DrawText("PAUSED", c.int((SCREEN_WIDTH - tw1) / 2), c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs1) / 2 - CELL_SIZE), c.int(fs1), rl.RAYWHITE)
+		rl.DrawText(
+			"PAUSED",
+			c.int((SCREEN_WIDTH - tw1) / 2),
+			c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs1) / 2 - CELL_SIZE),
+			c.int(fs1),
+			rl.RAYWHITE,
+		)
 		fs2 := CELL_SIZE / 2
 		tw2 := rl.MeasureText("Press ESC or P to resume", c.int(fs2))
-		rl.DrawText("Press ESC or P to resume", c.int((SCREEN_WIDTH - tw2) / 2), c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs2) / 2 + CELL_SIZE), c.int(fs2), rl.Color{200, 200, 200, 255})
+		rl.DrawText(
+			"Press ESC or P to resume",
+			c.int((SCREEN_WIDTH - tw2) / 2),
+			c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs2) / 2 + CELL_SIZE),
+			c.int(fs2),
+			rl.Color{200, 200, 200, 255},
+		)
 	}
 }
 CELL_SIZE :: 50
@@ -531,7 +552,8 @@ update :: proc(
 			for seg in snake.body {
 				if npc_head == seg {
 					playing.npc_kills += 1
-					playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+					playing.score =
+						playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 					append(&playing.pending_labels, PendingLabel{pos = npc_head, text = "+10"})
 					delete(playing.npc_snakes[i].body)
 					delete(playing.npc_snakes[i].head_dirs)
@@ -1472,7 +1494,11 @@ draw_game_over :: proc(final_score: int, playing: Playing) {
 	detail_color := rl.Color{200, 230, 180, 255}
 	details: [3]cstring
 	details[0] = rl.TextFormat("Apples:      %d  (+%d)", playing.apples, playing.apples)
-	details[1] = rl.TextFormat("Foul kills:  %d  (+%d)", playing.foul_kills, playing.foul_kills * 5)
+	details[1] = rl.TextFormat(
+		"Foul kills:  %d  (+%d)",
+		playing.foul_kills,
+		playing.foul_kills * 5,
+	)
 	details[2] = rl.TextFormat("NPC kills:   %d  (+%d)", playing.npc_kills, playing.npc_kills * 10)
 	for &txt in details {
 		w := rl.MeasureText(txt, fsize4)
