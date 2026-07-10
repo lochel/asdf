@@ -4,6 +4,12 @@ import "core:c"
 import "engine"
 import rl "vendor:raylib"
 
+FloatingLabel :: struct {
+	pos:   Vec2,
+	timer: f32,
+	life:  f32,
+}
+
 Game_Context :: struct {
 	using scene:    engine.Scene_Context,
 	playing:       Playing,
@@ -15,6 +21,7 @@ Game_Context :: struct {
 	final_score:   int,
 	prev_level:    int,
 	entered:       bool,
+	labels:        [dynamic]FloatingLabel,
 }
 
 game_init :: proc(ctx: ^engine.Scene_Context) {
@@ -36,6 +43,7 @@ game_deinit :: proc(ctx: ^engine.Scene_Context) {
 	delete(gd.playing.splits_triggered)
 	delete(gd.snake.body)
 	delete(gd.snake.head_dirs)
+	delete(gd.labels)
 	if gd.tilemap_loaded {
 		unload_tilemap(&gd.tilemap)
 	}
@@ -93,6 +101,7 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd.game_over = false
 	gd.final_score = 0
 	gd.prev_level = 0
+	clear(&gd.labels)
 }
 
 game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
@@ -145,6 +154,18 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 			unordered_remove(&playing.foul_foods, i)
 		}
 	}
+
+    // Remove labels that are not used anymore
+	for i := len(gd.labels) - 1; i >= 0; i -= 1 {
+		gd.labels[i].timer += dt
+		if gd.labels[i].timer >= gd.labels[i].life {
+			unordered_remove(&gd.labels, i)
+		}
+	}
+
+	prev_score := playing.score
+	food_before := gd.food
+
 	if playing.countdown > 0 {
 		playing.countdown -= dt
 		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, true) {
@@ -160,6 +181,10 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 			resize_for_tilemap(gd.tilemap, gd.eng)
 			gd.prev_level = playing.current_level
 		}
+	}
+
+	if playing.score > prev_score && food_before.x >= 0 {
+		append(&gd.labels, FloatingLabel{pos = food_before, life = 0.8})
 	}
 }
 
@@ -201,6 +226,16 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	}
 	for npc in playing.npc_snakes {
 		draw_npc_snake(npc, assets_global)
+	}
+	for label in gd.labels {
+		t := label.timer / label.life
+		alpha := u8(255 * (1.0 - t))
+		y_off := -t * f32(CELL_SIZE) - CELL_SIZE
+		fx := f32(label.pos.x * CELL_SIZE + CELL_SIZE / 2)
+		fy := f32(label.pos.y * CELL_SIZE + CELL_SIZE / 2) + y_off
+		font_size := c.int(CELL_SIZE)
+		tw := rl.MeasureText("+1", font_size)
+		rl.DrawText("+1", c.int(fx) - tw / 2, c.int(fy) - font_size / 2, font_size, rl.Color{255, 255, 100, alpha})
 	}
 	target: Vec2
 	has_target := false
