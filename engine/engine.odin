@@ -1,5 +1,6 @@
 package engine
 
+import "core:fmt"
 import rl "vendor:raylib"
 
 Engine_Context :: struct {
@@ -14,7 +15,6 @@ Engine_Context :: struct {
 	audio_enabled:  bool,
 	should_close:   bool,
 }
-
 
 enable_audio :: proc(e: ^Engine_Context) {
 	rl.InitAudioDevice()
@@ -115,21 +115,28 @@ run :: proc(e: ^Engine_Context, first: string) {
 			e.current.input(e.current, dt)
 		}
 
-		if e.current != nil && e.current.update != nil {
+		if e.current != nil && e.current.step != nil {
 			if e.current.fixed_step > 0 {
-				e.current.update_acc += dt
-				step := e.current.fixed_step
-				max_acc := step * 5
-				if e.current.update_acc > max_acc {
-					e.current.update_acc = max_acc
+				e.current.step_acc += dt
+				fs := e.current.fixed_step
+				max_acc := fs * 5
+				if e.current.step_acc > max_acc {
+					e.current.step_acc = max_acc
+					fmt.println("Warning: dropping steps")
 				}
-				for e.current.update_acc >= step {
-					e.current.update(e.current, step)
-					e.current.update_acc -= step
+				for e.current.step_acc >= fs {
+					e.current.step_count += 1
+					e.current.step(e.current, e.current.step_count)
+					e.current.step_acc -= fs
 				}
 			} else {
-				e.current.update(e.current, dt)
+				e.current.step_count += 1
+				e.current.step(e.current, e.current.step_count)
 			}
+		}
+
+		if e.current != nil && e.current.update != nil {
+			e.current.update(e.current, dt)
 		}
 		if e.trans.active && e.next != nil && e.next.update != nil {
 			e.next.update(e.next, dt)

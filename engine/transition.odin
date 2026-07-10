@@ -22,7 +22,8 @@ update_transition :: proc(e: ^Engine_Context, dt: f32) {
 	if e.trans.timer >= e.trans.duration {
 		e.trans.active = false
 		e.current = e.next
-		e.current.update_acc = 0
+		e.current.step_acc = 0
+		e.current.step_count = 0
 		e.next = nil
 		if e.current != nil && e.current.enter != nil {
 			e.current.enter(e.current)
