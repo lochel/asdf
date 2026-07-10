@@ -567,13 +567,26 @@ update :: proc(
 			}
 			if npc_dies do continue
 
-			// Player head hits NPC body → player dies
+			// Player head hits NPC body → both die
 			if !npcs_only {
 				for seg in playing.npc_snakes[i].body {
 					if player_head == seg {
-						return player_died(snake, food, playing, assets, tm)
+						playing.npc_kills += 1
+						playing.score =
+							playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+						delete(playing.npc_snakes[i].body)
+						delete(playing.npc_snakes[i].head_dirs)
+						delete(playing.npc_snakes[i].debug_path)
+						unordered_remove(&playing.npc_snakes, i)
+						npc_dies = true
+						break
 					}
 				}
+			}
+			if npc_dies {
+				player_died(snake, food, playing, assets, tm)
+				append(&playing.pending_labels, PendingLabel{pos = npc_head, text = "+10"})
+				return playing.lives <= 0
 			}
 
 			i += 1
