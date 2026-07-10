@@ -47,6 +47,7 @@ game_deinit :: proc(ctx: ^engine.Scene_Context) {
 	delete(gd.playing.npc_snakes)
 	delete(gd.playing.foul_foods)
 	delete(gd.playing.splits_triggered)
+	delete(gd.playing.pending_labels)
 	delete(gd.snake.body)
 	delete(gd.snake.head_dirs)
 	delete(gd.labels)
@@ -77,6 +78,7 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	delete(gd.playing.npc_snakes)
 	delete(gd.playing.foul_foods)
 	delete(gd.playing.splits_triggered)
+	delete(gd.playing.pending_labels)
 
 	if gd.tilemap_loaded {
 		unload_tilemap(&gd.tilemap)
@@ -634,6 +636,7 @@ player_died :: proc(
 		delete(playing.npc_snakes)
 		delete(playing.foul_foods)
 		delete(playing.splits_triggered)
+		delete(playing.pending_labels)
 		return true
 	}
 
@@ -687,6 +690,7 @@ advance_level :: proc(
 		delete(playing.npc_snakes)
 		delete(playing.foul_foods)
 		delete(playing.splits_triggered)
+		delete(playing.pending_labels)
 		return true
 	}
 

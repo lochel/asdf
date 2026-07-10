@@ -166,6 +166,7 @@ menu_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 			}
 		}
 		move_timer_menu = 0
+		delete(demo_play.pending_labels)
 	}
 }
 

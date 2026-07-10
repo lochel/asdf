@@ -6,62 +6,64 @@ import "vendor:raylib"
 GLOW_SIZE :: CELL_SIZE * 2
 
 Sprites :: struct {
-	apple:            raylib.Texture2D,
-	foul_apple:       raylib.Texture2D,
-	head:             [Direction]raylib.Texture2D,
-	tail:             [Direction]raylib.Texture2D,
-	body_horizontal:  raylib.Texture2D,
-	body_vertical:    raylib.Texture2D,
-	body_topleft:     raylib.Texture2D,
-	body_topright:    raylib.Texture2D,
-	body_bottomleft:  raylib.Texture2D,
-	body_bottomright: raylib.Texture2D,
-	grass:            raylib.Texture2D,
-	wall:             raylib.Texture2D,
-	puddle:           raylib.Texture2D,
-	grass_shader:        raylib.Shader,
-	grass_time_loc:      c.int,
-	grass_shader_valid:  bool,
-	npc_glow_shader:     raylib.Shader,
-	npc_glow_time_loc:   c.int,
+	apple:                 raylib.Texture2D,
+	foul_apple:            raylib.Texture2D,
+	head:                  [Direction]raylib.Texture2D,
+	tail:                  [Direction]raylib.Texture2D,
+	body_horizontal:       raylib.Texture2D,
+	body_vertical:         raylib.Texture2D,
+	body_topleft:          raylib.Texture2D,
+	body_topright:         raylib.Texture2D,
+	body_bottomleft:       raylib.Texture2D,
+	body_bottomright:      raylib.Texture2D,
+	grass:                 raylib.Texture2D,
+	wall:                  raylib.Texture2D,
+	puddle:                raylib.Texture2D,
+	grass_shader:          raylib.Shader,
+	grass_time_loc:        c.int,
+	grass_shader_valid:    bool,
+	npc_glow_shader:       raylib.Shader,
+	npc_glow_time_loc:     c.int,
 	npc_glow_shader_valid: bool,
-	glow:               raylib.Texture2D,
+	glow:                  raylib.Texture2D,
 }
 
 Sounds :: struct {
-    game_over: raylib.Sound,
-	eat: raylib.Sound,
-	split: raylib.Sound,
-	gate_open: raylib.Sound,
+	game_over:      raylib.Sound,
+	eat:            raylib.Sound,
+	split:          raylib.Sound,
+	gate_open:      raylib.Sound,
 	level_complete: raylib.Sound,
 }
 
 Assets :: struct {
-    sprites: Sprites,
-    sounds: Sounds
+	sprites: Sprites,
+	sounds:  Sounds,
 }
 
 
 load_assets :: proc() -> Assets {
-    assets := Assets{}
-    assets.sprites = load_sprites()
-    assets.sounds = load_sounds()
-    return assets
+	assets := Assets{}
+	assets.sprites = load_sprites()
+	assets.sounds = load_sounds()
+	return assets
 }
 
 unload_assets :: proc(assets: Assets) {
-    unload_sprites(assets.sprites)
-    unload_sounds(assets.sounds)
+	unload_sprites(assets.sprites)
+	unload_sounds(assets.sounds)
 }
 
 load_sounds :: proc() -> Sounds {
-    sounds := Sounds{}
+	sounds := Sounds{}
 	sounds.game_over = raylib.LoadSound("assets/sounds/mixkit-arcade-retro-game-over-213.wav")
 	sounds.eat = raylib.LoadSound("assets/sounds/mixkit-retro-game-notification-212.wav")
 	sounds.split = raylib.LoadSound("assets/sounds/mixkit-robot-system-fail-2960.wav")
 	sounds.gate_open = raylib.LoadSound("assets/sounds/mixkit-arcade-bonus-alert-767.wav")
-	sounds.level_complete = raylib.LoadSound("assets/sounds/mixkit-arcade-game-complete-or-approved-mission-205.wav")
-    return sounds
+	sounds.level_complete = raylib.LoadSound(
+		"assets/sounds/mixkit-arcade-game-complete-or-approved-mission-205.wav",
+	)
+	return sounds
 }
 
 unload_sounds :: proc(sounds: Sounds) {
@@ -155,7 +157,13 @@ load_sprites :: proc() -> Sprites {
 		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
 	}
 
-	glow_img := raylib.GenImageGradientRadial(GLOW_SIZE, c.int(GLOW_SIZE), 0.3, raylib.WHITE, raylib.BLANK)
+	glow_img := raylib.GenImageGradientRadial(
+		GLOW_SIZE,
+		c.int(GLOW_SIZE),
+		0.3,
+		raylib.WHITE,
+		raylib.BLANK,
+	)
 	defer raylib.UnloadImage(glow_img)
 	s.glow = raylib.LoadTextureFromImage(glow_img)
 	raylib.SetTextureFilter(s.glow, .POINT)
@@ -187,4 +195,3 @@ unload_sprites :: proc(s: Sprites) {
 	}
 	raylib.UnloadTexture(s.glow)
 }
-
