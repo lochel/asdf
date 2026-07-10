@@ -3,14 +3,15 @@ package engine
 import rl "vendor:raylib"
 
 Scene_Context :: struct {
-	eng:      ^Engine_Context,
-	target:   rl.RenderTexture2D,
-	init:     proc(ctx: ^Scene_Context),
-	deinit:   proc(ctx: ^Scene_Context),
-	enter: proc(ctx: ^Scene_Context),
-	leave: proc(ctx: ^Scene_Context),
-	update:   proc(ctx: ^Scene_Context, dt: f32),
-	render:   proc(ctx: ^Scene_Context),
+	eng:    ^Engine_Context,
+	target: rl.RenderTexture2D,
+	init:   proc(ctx: ^Scene_Context),
+	deinit: proc(ctx: ^Scene_Context),
+	enter:  proc(ctx: ^Scene_Context),
+	leave:  proc(ctx: ^Scene_Context),
+	input:  proc(ctx: ^Scene_Context, dt: f32),
+	update: proc(ctx: ^Scene_Context, dt: f32),
+	render: proc(ctx: ^Scene_Context),
 }
 
 addScene :: proc(e: ^Engine_Context, name: string, scene: ^Scene_Context) {

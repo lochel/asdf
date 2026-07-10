@@ -105,6 +105,10 @@ run :: proc(e: ^Engine_Context, first: string) {
 
 		update_transition(e, dt)
 
+		if e.current != nil && e.current.input != nil {
+			e.current.input(e.current, dt)
+		}
+
 		if e.current != nil && e.current.update != nil {
 			e.current.update(e.current, dt)
 		}

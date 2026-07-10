@@ -35,7 +35,7 @@ game_init :: proc(ctx: ^engine.Scene_Context) {
 game_deinit :: proc(ctx: ^engine.Scene_Context) {
 }
 
-game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	gd := cast(^Game_Context)ctx
 
 	if rl.IsKeyReleased(.E) {
@@ -53,6 +53,10 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	if rl.IsKeyDown(.S) || rl.IsKeyDown(.DOWN) {gd.player.y += speed * dt}
 	if rl.IsKeyDown(.A) || rl.IsKeyDown(.LEFT) {gd.player.x -= speed * dt}
 	if rl.IsKeyDown(.D) || rl.IsKeyDown(.RIGHT) {gd.player.x += speed * dt}
+}
+
+game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+	gd := cast(^Game_Context)ctx
 
 	gd.player.x = clamp(gd.player.x, PLAYER_SIZE, f32(gd.eng.config.width - PLAYER_SIZE))
 	gd.player.y = clamp(gd.player.y, PLAYER_SIZE, f32(gd.eng.config.height - PLAYER_SIZE))

@@ -34,9 +34,8 @@ menu_leave :: proc(ctx: ^engine.Scene_Context) {
 	fmt.println("menu_on_leave")
 }
 
-menu_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	mc := cast(^Menu_Context)ctx
-	mc.pulse += dt * 5
 
 	if rl.IsKeyPressed(.ENTER) {
 		engine.switch_scene(mc.eng, engine.getScene(mc.eng, "game"), .Slide_Right, 0.6)
@@ -44,14 +43,19 @@ menu_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	if rl.IsKeyPressed(.F11) {
 		engine.toggle_fullscreen(mc.eng)
 	}
-    if rl.IsKeyReleased(.T) {
-        engine.resize(mc.eng, 1200, 1200)
-        return
-    }
-    if rl.IsKeyReleased(.R) {
-        engine.resize(mc.eng, 800, 600)
-        return
-    }
+	if rl.IsKeyReleased(.T) {
+		engine.resize(mc.eng, 1200, 1200)
+		return
+	}
+	if rl.IsKeyReleased(.R) {
+		engine.resize(mc.eng, 800, 600)
+		return
+	}
+}
+
+menu_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+	mc := cast(^Menu_Context)ctx
+	mc.pulse += dt * 5
 }
 
 menu_render :: proc(ctx: ^engine.Scene_Context) {
