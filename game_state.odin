@@ -3,6 +3,9 @@ package main
 Playing :: struct {
 	lives:            int,
 	current_level:    int,
+	apples:           int,
+	foul_kills:       int,
+	npc_kills:        int,
 	score:            int,
 	total_score:      int,
 	npc_snakes:       [dynamic]NpcSnake,

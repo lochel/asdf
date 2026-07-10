@@ -151,7 +151,8 @@ update :: proc(
 		}
 
 		if new_head == food^ {
-			playing.score += 1
+			playing.apples += 1
+			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 			raylib.PlaySound(assets^.sounds.eat)
 
 			if !playing.gate_open {
@@ -226,7 +227,8 @@ update :: proc(
 			npc_dies := false
 			for seg in snake.body {
 				if npc_head == seg {
-					playing.score += 10
+					playing.npc_kills += 1
+					playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 					delete(playing.npc_snakes[i].body)
 					delete(playing.npc_snakes[i].head_dirs)
 					delete(playing.npc_snakes[i].debug_path)
@@ -388,6 +390,9 @@ advance_level :: proc(
 	}
 	clear(&playing.npc_snakes)
 
+	playing.apples = 0
+	playing.foul_kills = 0
+	playing.npc_kills = 0
 	playing.score = 0
 	clear(&playing.splits_triggered)
 	playing.countdown = 4.0
@@ -830,7 +835,8 @@ move_npc :: proc(
 	for i in 0 ..< len(playing.foul_foods) {
 		if new_head == playing.foul_foods[i].pos {
 			unordered_remove(&playing.foul_foods, i)
-			playing.score += 5
+			playing.foul_kills += 1
+			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 			return false, false
 		}
 	}

@@ -84,6 +84,9 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd.playing = Playing {
 		lives            = 3,
 		current_level    = 0,
+		apples           = 0,
+		foul_kills       = 0,
+		npc_kills        = 0,
 		score            = 0,
 		total_score      = 0,
 		npc_snakes       = {},
