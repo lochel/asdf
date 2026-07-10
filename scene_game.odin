@@ -211,6 +211,7 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	if gd.game_over {
+		draw_hud(gd.playing)
 		if gd.tilemap_loaded {
 			rl.BeginMode2D(camera)
 			draw_background(gd.tilemap, assets_global, 0)
@@ -218,7 +219,7 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		} else {
 			rl.ClearBackground(rl.Color{20, 20, 30, 255})
 		}
-		draw_game_over(gd.final_score)
+		draw_game_over(gd.final_score, gd.playing)
 		return
 	}
 
@@ -668,7 +669,6 @@ advance_level :: proc(
 	}
 
 	playing.total_score += playing.score
-	playing.total_score += playing.lives * 10
 
 	unload_tilemap(tm)
 	tm^ = load_tilemap(LEVELS[playing.current_level].file)
@@ -1448,32 +1448,41 @@ draw_debug_overlay :: proc(frame_count: u64) {
 	rl.DrawText(text, x, y, 20, rl.Color{255, 255, 255, 200})
 }
 
-draw_game_over :: proc(score: int) {
-	text1 := rl.TextFormat("GAME OVER!")
-	text2 := rl.TextFormat("Total Score: %d", score)
-	text3 := rl.TextFormat("Press SPACE to restart")
-
+draw_game_over :: proc(final_score: int, playing: Playing) {
 	fsize1: c.int = CELL_SIZE * 3
 	fsize2: c.int = CELL_SIZE * 2
 	fsize3: c.int = CELL_SIZE
+	fsize4: c.int = CELL_SIZE / 2 + 4
 
-	w1 := rl.MeasureText(text1, fsize1)
-	w2 := rl.MeasureText(text2, fsize2)
-	w3 := rl.MeasureText(text3, fsize3)
+	cy: c.int = SCREEN_HEIGHT / 2 - fsize1
 
-	rl.DrawText(
-		text1,
-		(SCREEN_WIDTH - w1) / 2,
-		SCREEN_HEIGHT / 2 - 2 * fsize1,
-		fsize1,
-		rl.RED,
-	)
-	rl.DrawText(text2, (SCREEN_WIDTH - w2) / 2, SCREEN_HEIGHT / 2, fsize2, rl.RAYWHITE)
-	rl.DrawText(
-		text3,
-		(SCREEN_WIDTH - w3) / 2,
-		SCREEN_HEIGHT / 2 + fsize2 + fsize3,
-		fsize3,
-		rl.GRAY,
-	)
+	// GAME OVER!
+	t1: cstring = "GAME OVER!"
+	w1 := rl.MeasureText(t1, fsize1)
+	rl.DrawText(t1, (SCREEN_WIDTH - w1) / 2, cy, fsize1, rl.RED)
+	cy += fsize1 + 10
+
+	// Total Score
+	t2 := rl.TextFormat("Total Score: %d", final_score)
+	w2 := rl.MeasureText(t2, fsize2)
+	rl.DrawText(t2, (SCREEN_WIDTH - w2) / 2, cy, fsize2, rl.RAYWHITE)
+	cy += fsize2 + 20
+
+	// Breakdown
+	detail_color := rl.Color{200, 230, 180, 255}
+	details: [3]cstring
+	details[0] = rl.TextFormat("Apples:      %d  (+%d)", playing.apples, playing.apples)
+	details[1] = rl.TextFormat("Foul kills:  %d  (+%d)", playing.foul_kills, playing.foul_kills * 5)
+	details[2] = rl.TextFormat("NPC kills:   %d  (+%d)", playing.npc_kills, playing.npc_kills * 10)
+	for &txt in details {
+		w := rl.MeasureText(txt, fsize4)
+		rl.DrawText(txt, (SCREEN_WIDTH - w) / 2, cy, fsize4, detail_color)
+		cy += fsize4 + 6
+	}
+
+	cy += 10
+	// Press SPACE
+	t3: cstring = "Press SPACE to restart"
+	w3 := rl.MeasureText(t3, fsize3)
+	rl.DrawText(t3, (SCREEN_WIDTH - w3) / 2, cy, fsize3, rl.GRAY)
 }
