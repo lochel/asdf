@@ -606,6 +606,9 @@ update :: proc(
 
 		for i := len(playing.npc_snakes) - 1; i >= 0; i -= 1 {
 			if dead[i] {
+				playing.npc_kills += 1
+				playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+				append(&playing.pending_labels, PendingLabel{pos = playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1], text = "+10"})
 				delete(playing.npc_snakes[i].body)
 				delete(playing.npc_snakes[i].head_dirs)
 				delete(playing.npc_snakes[i].debug_path)
