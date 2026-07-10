@@ -22,7 +22,7 @@ main :: proc() {
 			enter = menu_enter,
 			leave = menu_leave,
 			input = menu_input,
-			update = menu_update,
+			step = menu_step,
 			render = menu_render,
 		},
 	}
@@ -33,6 +33,7 @@ main :: proc() {
 			deinit = game_deinit,
 			enter = game_enter,
 			input = game_input,
+			step = game_step,
 			update = game_update,
 			render = game_render,
 			fixed_step = move_delay,

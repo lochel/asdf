@@ -134,10 +134,10 @@ menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 }
 
-menu_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+menu_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 	mc := cast(^Menu_Context)ctx
 
-	move_timer_menu += dt
+	move_timer_menu += rl.GetFrameTime()
 	if move_timer_menu >= move_delay {
 		demo_play := Playing {
 			npc_snakes = mc.demo_npcs,

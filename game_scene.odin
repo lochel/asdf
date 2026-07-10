@@ -139,7 +139,7 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 }
 
-game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+game_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 	gd := cast(^Game_Context)ctx
 
 	if gd.game_over || gd.playing.paused {
@@ -147,19 +147,12 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 
 	playing := &gd.playing
+	dt := gd.fixed_step
 
 	for i := len(playing.foul_foods) - 1; i >= 0; i -= 1 {
 		playing.foul_foods[i].timer -= dt
 		if playing.foul_foods[i].timer <= 0 {
 			unordered_remove(&playing.foul_foods, i)
-		}
-	}
-
-    // Remove labels that are not used anymore
-	for i := len(gd.labels) - 1; i >= 0; i -= 1 {
-		gd.labels[i].timer += dt
-		if gd.labels[i].timer >= gd.labels[i].life {
-			unordered_remove(&gd.labels, i)
 		}
 	}
 
@@ -185,6 +178,17 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 
 	if playing.score > prev_score && food_before.x >= 0 {
 		append(&gd.labels, FloatingLabel{pos = food_before, life = 0.8})
+	}
+}
+
+game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+	gd := cast(^Game_Context)ctx
+
+	for i := len(gd.labels) - 1; i >= 0; i -= 1 {
+		gd.labels[i].timer += dt
+		if gd.labels[i].timer >= gd.labels[i].life {
+			unordered_remove(&gd.labels, i)
+		}
 	}
 }
 
