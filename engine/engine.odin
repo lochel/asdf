@@ -12,6 +12,7 @@ Engine_Context :: struct {
 	trans:          Transition,
 	scenes:         map[string]^Scene_Context,
 	audio_enabled:  bool,
+	should_close:   bool,
 }
 
 
@@ -70,6 +71,10 @@ destroy :: proc(e: ^Engine_Context) {
 	delete(e.scenes)
 }
 
+close :: proc(e: ^Engine_Context) {
+	e.should_close = true
+}
+
 run :: proc(e: ^Engine_Context, first: string) {
 	flags: rl.ConfigFlags = {}
 	if e.config.resizable {
@@ -81,6 +86,7 @@ run :: proc(e: ^Engine_Context, first: string) {
 	defer rl.CloseWindow()
 
 	rl.SetTargetFPS(e.config.target_fps)
+	rl.SetExitKey(.KEY_NULL)
 
 	if e.config.fullscreen {
 		toggle_fullscreen(e)
@@ -96,7 +102,7 @@ run :: proc(e: ^Engine_Context, first: string) {
 	e.current = e.scenes[first]
 	if e.current == nil {return}
 
-	for !rl.WindowShouldClose() {
+	for !e.should_close && !rl.WindowShouldClose() {
 		dt := rl.GetFrameTime()
 
 		if rl.IsWindowFullscreen() != e.config.fullscreen {
