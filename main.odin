@@ -13,6 +13,8 @@ main :: proc() {
 	app := engine.create("Diggle", default_cfg)
 	defer engine.destroy(&app)
 
+	engine.enable_audio(&app)
+
 	menu := Menu_Context {
 		scene = {
 			init = menu_init,
@@ -29,6 +31,7 @@ main :: proc() {
 		scene = {
 			init = game_init,
 			deinit = game_deinit,
+			enter = game_enter,
 			input = game_input,
 			update = game_update,
 			render = game_render,
