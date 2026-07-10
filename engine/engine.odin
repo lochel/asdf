@@ -11,6 +11,13 @@ Engine_Context :: struct {
 	next:           ^Scene_Context,
 	trans:          Transition,
 	scenes:         map[string]^Scene_Context,
+	audio_enabled:  bool,
+}
+
+
+enable_audio :: proc(e: ^Engine_Context) {
+	rl.InitAudioDevice()
+	e.audio_enabled = true
 }
 
 create :: proc(title: cstring, default_cfg: Config) -> Engine_Context {
@@ -25,6 +32,7 @@ create :: proc(title: cstring, default_cfg: Config) -> Engine_Context {
 		title = title,
 		clear_color = rl.PINK,
 		scenes = make(map[string]^Scene_Context),
+		audio_enabled = false,
 	}
 }
 
@@ -56,6 +64,9 @@ toggle_fullscreen :: proc(e: ^Engine_Context) {
 
 destroy :: proc(e: ^Engine_Context) {
 	save_config(e.config)
+	if e.audio_enabled {
+		rl.CloseAudioDevice()
+	}
 	delete(e.scenes)
 }
 
@@ -65,8 +76,8 @@ run :: proc(e: ^Engine_Context, first: string) {
 		flags += {.WINDOW_RESIZABLE}
 	}
 	rl.SetConfigFlags(flags)
-	
-    rl.InitWindow(e.config.width, e.config.height, e.title)
+
+	rl.InitWindow(e.config.width, e.config.height, e.title)
 	defer rl.CloseWindow()
 
 	rl.SetTargetFPS(e.config.target_fps)
@@ -77,8 +88,8 @@ run :: proc(e: ^Engine_Context, first: string) {
 
 	for _, scene in e.scenes {
 		if scene.init != nil {
-            scene.init(scene)
-	    }
+			scene.init(scene)
+		}
 		scene.target = rl.LoadRenderTexture(e.config.width, e.config.height)
 	}
 
@@ -140,8 +151,8 @@ run :: proc(e: ^Engine_Context, first: string) {
 
 	for _, scene in e.scenes {
 		if scene.deinit != nil {
-            scene.deinit(scene)
-	    }
+			scene.deinit(scene)
+		}
 		rl.UnloadRenderTexture(scene.target)
-    }
+	}
 }
