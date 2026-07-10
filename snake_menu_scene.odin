@@ -124,6 +124,10 @@ menu_leave :: proc(ctx: ^engine.Scene_Context) {
 menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	mc := cast(^Menu_Context)ctx
 
+	if rl.IsKeyPressed(.ESCAPE) {
+		engine.close(mc.eng)
+		return
+	}
 	if rl.IsKeyPressed(.ENTER) || rl.IsKeyPressed(.SPACE) || controller_confirm() {
 		engine.switch_scene(mc.eng, engine.getScene(mc.eng, "game"), .Slide_Right, 0.6)
 		return
