@@ -11,7 +11,6 @@ Game_Context :: struct {
 	food:          Food,
 	tilemap:       Tilemap,
 	tilemap_loaded: bool,
-	move_timer:    f32,
 	game_over:     bool,
 	final_score:   int,
 	prev_level:    int,
@@ -91,7 +90,6 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	init_game(&gd.snake, &gd.food, &gd.tilemap)
-	gd.move_timer = 0
 	gd.game_over = false
 	gd.final_score = 0
 	gd.prev_level = 0
@@ -149,26 +147,18 @@ game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 	if playing.countdown > 0 {
 		playing.countdown -= dt
-		gd.move_timer += dt
-		if gd.move_timer >= move_delay {
-			if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, true) {
-				gd.game_over = true
-				gd.final_score = playing.total_score + playing.score
-			}
-			gd.move_timer = 0
+		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, true) {
+			gd.game_over = true
+			gd.final_score = playing.total_score + playing.score
 		}
 	} else {
-		gd.move_timer += dt
-		if gd.move_timer >= move_delay {
-			if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, false) {
-				gd.game_over = true
-				gd.final_score = playing.total_score + playing.score
-			}
-			if playing.current_level != gd.prev_level {
-				resize_for_tilemap(gd.tilemap, gd.eng)
-				gd.prev_level = playing.current_level
-			}
-			gd.move_timer = 0
+		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, false) {
+			gd.game_over = true
+			gd.final_score = playing.total_score + playing.score
+		}
+		if playing.current_level != gd.prev_level {
+			resize_for_tilemap(gd.tilemap, gd.eng)
+			gd.prev_level = playing.current_level
 		}
 	}
 }
