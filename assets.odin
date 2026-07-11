@@ -3,8 +3,6 @@ package main
 import "core:c"
 import "vendor:raylib"
 
-GLOW_SIZE :: CELL_SIZE * 2
-
 Sprites :: struct {
 	apple:                 raylib.Texture2D,
 	foul_apple:            raylib.Texture2D,
@@ -25,7 +23,6 @@ Sprites :: struct {
 	npc_glow_shader:       raylib.Shader,
 	npc_glow_time_loc:     c.int,
 	npc_glow_shader_valid: bool,
-	glow:                  raylib.Texture2D,
 }
 
 Sounds :: struct {
@@ -157,17 +154,6 @@ load_sprites :: proc() -> Sprites {
 		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
 	}
 
-	glow_img := raylib.GenImageGradientRadial(
-		GLOW_SIZE,
-		c.int(GLOW_SIZE),
-		0.3,
-		raylib.WHITE,
-		raylib.BLANK,
-	)
-	defer raylib.UnloadImage(glow_img)
-	s.glow = raylib.LoadTextureFromImage(glow_img)
-	raylib.SetTextureFilter(s.glow, .POINT)
-
 	return s
 }
 
@@ -193,5 +179,4 @@ unload_sprites :: proc(s: Sprites) {
 	if s.npc_glow_shader_valid {
 		raylib.UnloadShader(s.npc_glow_shader)
 	}
-	raylib.UnloadTexture(s.glow)
 }

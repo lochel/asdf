@@ -12,14 +12,8 @@ uniform float u_time;
 void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
-
-    float dist = distance(fragTexCoord, vec2(0.5));
-    float pulse = sin(u_time * 3.0) * 0.3 + 0.7;
-    float aura = (1.0 - smoothstep(0.15, 0.5, dist)) * 0.25 * pulse;
-
-    vec3 glow = vec3(aura, aura * 0.15, 0.0);
-    vec3 color = texelColor.rgb + glow;
-    color = clamp(color, 0.0, 1.0);
-
+    float t = u_time;
+    float pulse = sin(t * 10.0) * 0.1 + 0.9;
+    vec3 color = texelColor.rgb * pulse;
     finalColor = vec4(color, texelColor.a) * fragColor * colDiffuse;
 }

@@ -1269,19 +1269,6 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 	head_idx := n - 1
 
 	t := f32(rl.GetTime())
-	t = t - f32(int(t / 1000)) * 1000
-
-	pulse := f32(math.sin(f64(t) * 3.0) * 0.3 + 0.7)
-	glow_alpha := u8(pulse * 60)
-	glow_tint := rl.Color{200, 60, 60, glow_alpha}
-	glow_offset := c.int((GLOW_SIZE - CELL_SIZE) / 2)
-
-	for i in 0 ..< n {
-		pos := npc.body[i]
-		gx := c.int(pos.x * CELL_SIZE) - glow_offset
-		gy := c.int(pos.y * CELL_SIZE) - glow_offset
-		rl.DrawTexture(assets.sprites.glow, gx, gy, glow_tint)
-	}
 
 	if assets.sprites.npc_glow_shader_valid {
 		if assets.sprites.npc_glow_time_loc >= 0 {
