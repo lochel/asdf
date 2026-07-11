@@ -6,11 +6,14 @@ import "engine"
 import rl "vendor:raylib"
 
 Menu_Context :: struct {
-	using scene:    engine.Scene_Context,
-	demo_npcs:      [dynamic]NpcSnake,
-	demo_food:      Food,
-	tilemap:        Tilemap,
-	tilemap_loaded: bool,
+	using scene:      engine.Scene_Context,
+	demo_npcs:        [dynamic]NpcSnake,
+	demo_food:        Food,
+	tilemap:          Tilemap,
+	tilemap_loaded:   bool,
+	tilemap_actor:    TilemapActor,
+	npc_actor:        NpcSnakeCollectionActor,
+	food_actor:       FoodActor,
 }
 
 spawn_demo_npc :: proc(m: ^Menu_Context) {
@@ -78,6 +81,23 @@ menu_init :: proc(ctx: ^engine.Scene_Context) {
 	spawn_demo_npc(mc)
 	spawn_demo_npc(mc)
 	spawn_demo_npc(mc)
+
+	mc.tilemap_actor = TilemapActor{
+		actor    = {scene = &mc.scene, render = tilemap_actor_render},
+		tilemap  = &mc.tilemap,
+		assets   = &assets_global,
+		remaining = LEVELS[0].gate_score,
+	}
+	mc.npc_actor = NpcSnakeCollectionActor{
+		actor  = {scene = &mc.scene, render = npc_snake_collection_render},
+		snakes = &mc.demo_npcs,
+		assets = &assets_global,
+	}
+	mc.food_actor = FoodActor{
+		actor  = {scene = &mc.scene, render = food_actor_render},
+		food   = &mc.demo_food,
+		assets = &assets_global,
+	}
 }
 
 menu_deinit :: proc(ctx: ^engine.Scene_Context) {
@@ -184,13 +204,9 @@ menu_render :: proc(ctx: ^engine.Scene_Context) {
 		mc.tilemap.tiles[mc.tilemap.start_pos.y][mc.tilemap.start_pos.x] = .Grass
 	}
 	rl.BeginMode2D(camera)
-	draw_background(mc.tilemap, assets_global, LEVELS[0].gate_score)
-	if mc.demo_food.x >= 0 {
-		draw_food(mc.demo_food, assets_global)
-	}
-	for npc in mc.demo_npcs {
-		draw_npc_snake(npc, assets_global)
-	}
+	mc.tilemap_actor.actor.render(&mc.tilemap_actor.actor)
+	mc.food_actor.actor.render(&mc.food_actor.actor)
+	mc.npc_actor.actor.render(&mc.npc_actor.actor)
 	if mc.demo_food.x >= 0 {
 		best_len := max(int)
 		best_npc_path: [dynamic]Vec2

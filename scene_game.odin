@@ -10,6 +10,7 @@ import "core:strings"
 import rl "vendor:raylib"
 
 FloatingLabel :: struct {
+	using actor: Actor,
 	pos:   Vec2,
 	timer: f32,
 	life:  f32,
@@ -17,17 +18,20 @@ FloatingLabel :: struct {
 }
 
 Game_Context :: struct {
-	using scene:    engine.Scene_Context,
-	playing:        Playing,
-	snake:          Snake,
-	food:           Food,
-	tilemap:        Tilemap,
-	tilemap_loaded: bool,
-	game_over:      bool,
-	final_score:    int,
-	prev_level:     int,
-	entered:        bool,
-	labels:         [dynamic]FloatingLabel,
+	using scene:      engine.Scene_Context,
+	playing:          Playing,
+	snake:            Snake,
+	food:             Food,
+	tilemap:          Tilemap,
+	tilemap_loaded:   bool,
+	game_over:        bool,
+	final_score:      int,
+	prev_level:       int,
+	entered:          bool,
+	labels:           [dynamic]FloatingLabel,
+	tilemap_actor:    TilemapActor,
+	snake_actor:      SnakeActor,
+	npc_actor:        NpcSnakeCollectionActor,
 }
 
 game_init :: proc(ctx: ^engine.Scene_Context) {
@@ -114,6 +118,23 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd.final_score = 0
 	gd.prev_level = 0
 	clear(&gd.labels)
+
+	gd.tilemap_actor = TilemapActor{
+		actor    = {scene = &gd.scene, render = tilemap_actor_render},
+		tilemap  = &gd.tilemap,
+		assets   = &assets_global,
+		remaining = 0,
+	}
+	gd.snake_actor = SnakeActor{
+		actor  = {scene = &gd.scene, render = snake_actor_render},
+		snake  = &gd.snake,
+		assets = &assets_global,
+	}
+	gd.npc_actor = NpcSnakeCollectionActor{
+		actor  = {scene = &gd.scene, render = npc_snake_collection_render},
+		snakes = &gd.playing.npc_snakes,
+		assets = &assets_global,
+	}
 }
 
 game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
@@ -164,6 +185,9 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	playing := &gd.playing
 	dt := move_delay
 
+	gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
+	gd.tilemap_actor.remaining = max(0, gate_threshold - playing.apples)
+
 	for i := len(playing.foul_foods) - 1; i >= 0; i -= 1 {
 		playing.foul_foods[i].timer -= dt
 		if playing.foul_foods[i].timer <= 0 {
@@ -189,7 +213,7 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	}
 
 	for pl in playing.pending_labels {
-		append(&gd.labels, FloatingLabel{pos = pl.pos, life = 0.8, text = pl.text})
+		append(&gd.labels, FloatingLabel{actor = {scene = &gd.scene, render = label_render}, pos = pl.pos, life = 0.8, text = pl.text})
 	}
 	clear(&playing.pending_labels)
 
@@ -221,7 +245,8 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		draw_hud(gd.playing)
 		if gd.tilemap_loaded {
 			rl.BeginMode2D(camera)
-			draw_background(gd.tilemap, assets_global, 0)
+			gd.tilemap_actor.remaining = 0
+			gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
 			rl.EndMode2D()
 		} else {
 			rl.ClearBackground(rl.Color{20, 20, 30, 255})
@@ -234,34 +259,17 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 
 	draw_hud(playing)
 	rl.BeginMode2D(camera)
-	gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
-	remaining := max(0, gate_threshold - playing.apples)
-	draw_background(gd.tilemap, assets_global, remaining)
+	gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
 	draw_food(gd.food, assets_global)
 	for ff in playing.foul_foods {
 		draw_foul_food(ff.pos, assets_global)
 	}
 	if playing.countdown <= 0 {
-		draw_snake(gd.snake, assets_global)
+		gd.snake_actor.actor.render(&gd.snake_actor.actor)
 	}
-	for npc in playing.npc_snakes {
-		draw_npc_snake(npc, assets_global)
-	}
-	for label in gd.labels {
-		t := label.timer / label.life
-		alpha := u8(255 * (1.0 - t))
-		y_off := -t * f32(CELL_SIZE) - CELL_SIZE
-		fx := f32(label.pos.x * CELL_SIZE + CELL_SIZE / 2)
-		fy := f32(label.pos.y * CELL_SIZE + CELL_SIZE / 2) + y_off
-		font_size := c.int(CELL_SIZE)
-		tw := rl.MeasureText(label.text, font_size)
-		rl.DrawText(
-			label.text,
-			c.int(fx) - tw / 2,
-			c.int(fy) - font_size / 2,
-			font_size,
-			rl.Color{255, 255, 100, alpha},
-		)
+	gd.npc_actor.actor.render(&gd.npc_actor.actor)
+	for i in 0 ..< len(gd.labels) {
+		gd.labels[i].actor.render(&gd.labels[i].actor)
 	}
 	target: Vec2
 	has_target := false
@@ -1206,10 +1214,6 @@ move_npc :: proc(
 	}
 
 	return true, ate
-}
-
-draw_background :: proc(tm: Tilemap, assets: Assets, remaining: int) {
-	draw_tilemap(tm, assets, remaining)
 }
 
 body_texture :: proc(s: Sprites, dir_in, dir_out: Vec2) -> rl.Texture2D {
