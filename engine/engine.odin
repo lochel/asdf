@@ -116,22 +116,15 @@ run :: proc(e: ^Engine_Context, first: string) {
 		}
 
 		if e.current != nil && e.current.step != nil {
-			if e.current.fixed_step > 0 {
-				e.current.step_acc += dt
-				fs := e.current.fixed_step
-				max_acc := fs * 5
-				if e.current.step_acc > max_acc {
-					e.current.step_acc = max_acc
-					fmt.println("Warning: dropping steps")
-				}
-				for e.current.step_acc >= fs {
-					e.current.step_count += 1
-					e.current.step(e.current, e.current.step_count)
-					e.current.step_acc -= fs
-				}
-			} else {
+			e.current.step_acc -= dt
+			max_iter := 5
+			for max_iter > 0 && e.current.step_acc <= 0 {
+				max_iter -= 1
+				e.current.step_acc += e.current.step(e.current, e.current.step_count)
 				e.current.step_count += 1
-				e.current.step(e.current, e.current.step_count)
+			}
+			if max_iter <= 0 {
+				fmt.println("death spiral prevented")
 			}
 		}
 

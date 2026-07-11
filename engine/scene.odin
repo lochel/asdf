@@ -5,15 +5,14 @@ import rl "vendor:raylib"
 Scene_Context :: struct {
 	eng:        ^Engine_Context,
 	target:     rl.RenderTexture2D,
-	fixed_step: f32,
-	step_acc:   f32,
+	step_acc:   f32, // step function is called if step_acc <= 0
 	step_count: int,
 	init:       proc(ctx: ^Scene_Context),
 	deinit:     proc(ctx: ^Scene_Context),
 	enter:      proc(ctx: ^Scene_Context),
 	leave:      proc(ctx: ^Scene_Context),
 	input:      proc(ctx: ^Scene_Context, dt: f32),
-	step:       proc(ctx: ^Scene_Context, step: int),
+	step:       proc(ctx: ^Scene_Context, step: int) -> f32, // returns the time step until next call
 	update:     proc(ctx: ^Scene_Context, dt: f32),
 	render:     proc(ctx: ^Scene_Context),
 }
