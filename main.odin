@@ -36,7 +36,6 @@ main :: proc() {
 			step = game_step,
 			update = game_update,
 			render = game_render,
-			fixed_step = move_delay,
 		},
 	}
 

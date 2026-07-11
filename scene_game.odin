@@ -154,15 +154,15 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 }
 
-game_step :: proc(ctx: ^engine.Scene_Context, step: int) {
+game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	gd := cast(^Game_Context)ctx
 
 	if gd.game_over || gd.playing.paused {
-		return
+		return move_delay
 	}
 
 	playing := &gd.playing
-	dt := gd.fixed_step
+	dt := move_delay
 
 	for i := len(playing.foul_foods) - 1; i >= 0; i -= 1 {
 		playing.foul_foods[i].timer -= dt
@@ -192,6 +192,8 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) {
 		append(&gd.labels, FloatingLabel{pos = pl.pos, life = 0.8, text = pl.text})
 	}
 	clear(&playing.pending_labels)
+
+	return move_delay
 }
 
 game_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {

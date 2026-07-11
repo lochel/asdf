@@ -134,40 +134,38 @@ menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	}
 }
 
-menu_step :: proc(ctx: ^engine.Scene_Context, step: int) {
+menu_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	mc := cast(^Menu_Context)ctx
 
-	move_timer_menu += rl.GetFrameTime()
-	if move_timer_menu >= move_delay {
-		demo_play := Playing {
-			npc_snakes = mc.demo_npcs,
-			foul_foods = {},
-		}
-		for i := len(mc.demo_npcs) - 1; i >= 0; i -= 1 {
-			food_pos := mc.demo_food
-			alive, ate := move_npc(
-				&mc.demo_npcs[i],
-				food_pos,
-				&snake_global,
-				&demo_play,
-				false,
-				mc.tilemap,
-			)
-			if !alive {
-				delete(mc.demo_npcs[i].body)
-				delete(mc.demo_npcs[i].head_dirs)
-				delete(mc.demo_npcs[i].debug_path)
-				unordered_remove(&mc.demo_npcs, i)
-				spawn_demo_npc(mc)
-				continue
-			}
-			if ate {
-				spawn_food(&snake_global, &mc.demo_food, mc.tilemap, &demo_play)
-			}
-		}
-		move_timer_menu = 0
-		delete(demo_play.pending_labels)
+	demo_play := Playing {
+		npc_snakes = mc.demo_npcs,
+		foul_foods = {},
 	}
+	for i := len(mc.demo_npcs) - 1; i >= 0; i -= 1 {
+		food_pos := mc.demo_food
+		alive, ate := move_npc(
+			&mc.demo_npcs[i],
+			food_pos,
+			&snake_global,
+			&demo_play,
+			false,
+			mc.tilemap,
+		)
+		if !alive {
+			delete(mc.demo_npcs[i].body)
+			delete(mc.demo_npcs[i].head_dirs)
+			delete(mc.demo_npcs[i].debug_path)
+			unordered_remove(&mc.demo_npcs, i)
+			spawn_demo_npc(mc)
+			continue
+		}
+		if ate {
+			spawn_food(&snake_global, &mc.demo_food, mc.tilemap, &demo_play)
+		}
+	}
+	delete(demo_play.pending_labels)
+
+	return 0.1
 }
 
 menu_render :: proc(ctx: ^engine.Scene_Context) {
@@ -241,6 +239,3 @@ menu_render :: proc(ctx: ^engine.Scene_Context) {
 	hw := rl.MeasureText(hint, hint_size)
 	rl.DrawText(hint, (SCREEN_WIDTH - hw) / 2, SCREEN_HEIGHT - CELL_SIZE * 3, hint_size, rl.GREEN)
 }
-
-@(private)
-move_timer_menu: f32 = 0
