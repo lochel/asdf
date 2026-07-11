@@ -25,7 +25,3 @@ Playing :: struct {
 	paused:           bool,
 	pending_labels:   [dynamic]PendingLabel,
 }
-
-GameOver :: struct {
-	final_score: int,
-}

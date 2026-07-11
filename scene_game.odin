@@ -5,7 +5,6 @@ import "engine"
 import "core:c"
 import "core:math"
 import "core:math/rand"
-import "core:strings"
 
 import rl "vendor:raylib"
 
@@ -197,19 +196,15 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 
 	if playing.countdown > 0 {
 		playing.countdown -= dt
-		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, true) {
-			gd.game_over = true
-			gd.final_score = playing.total_score + playing.score
-		}
-	} else {
-		if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, false) {
-			gd.game_over = true
-			gd.final_score = playing.total_score + playing.score
-		}
-		if playing.current_level != gd.prev_level {
-			resize_for_tilemap(gd.tilemap, gd.eng)
-			gd.prev_level = playing.current_level
-		}
+	}
+	npcs_only := playing.countdown > 0
+	if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, npcs_only) {
+		gd.game_over = true
+		gd.final_score = playing.total_score + playing.score
+	}
+	if playing.current_level != gd.prev_level {
+		resize_for_tilemap(gd.tilemap, gd.eng)
+		gd.prev_level = playing.current_level
 	}
 
 	for pl in playing.pending_labels {
@@ -285,17 +280,16 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		best_tint: rl.Color
 		best_len := max(int)
 		best_head: Vec2 = {-1, -1}
-		delete_paths: [dynamic][dynamic]Vec2
+		hint_path: [dynamic]Vec2
 
 		if show_hint {
-			p := find_path(&gd.snake, &playing, &gd.tilemap, target)
-			if len(p) > 1 && len(p) < best_len {
-				best_len = len(p)
-				best_path = p
+			hint_path = find_path(&gd.snake, &playing, &gd.tilemap, target)
+			if len(hint_path) > 1 && len(hint_path) < best_len {
+				best_len = len(hint_path)
+				best_path = hint_path
 				best_tint = rl.Color{80, 140, 255, 140}
 				best_head = gd.snake.body[len(gd.snake.body) - 1]
 			}
-			append(&delete_paths, p)
 		}
 
 		for npc in playing.npc_snakes {
@@ -310,10 +304,7 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		if best_path != nil {
 			draw_path(best_path, best_tint, best_head, target)
 		}
-		for p in delete_paths {
-			delete(p)
-		}
-		delete(delete_paths)
+		delete(hint_path)
 	}
 	rl.EndMode2D()
 	if playing.countdown > 0 {
@@ -1434,35 +1425,6 @@ draw_hud :: proc(playing: Playing) {
 	}
 }
 
-draw_score :: proc(score, total: int) {
-	text := rl.TextFormat("Level: %d  Total: %d", score, total)
-	rl.DrawText(text, c.int(CELL_SIZE / 2), c.int(CELL_SIZE / 2), CELL_SIZE, rl.RAYWHITE)
-}
-
-draw_lives :: proc(lives: int) {
-	for i in 0 ..< lives {
-		rl.DrawRectangle(
-			c.int(int(SCREEN_WIDTH) - CELL_SIZE * (lives - i)),
-			c.int(CELL_SIZE / 2),
-			CELL_SIZE - 4,
-			CELL_SIZE - 4,
-			rl.RED,
-		)
-	}
-}
-
-draw_level_label :: proc(label: string) {
-	cstr := strings.clone_to_cstring(label)
-	defer delete(cstr)
-	rl.DrawText(
-		cstr,
-		c.int(SCREEN_WIDTH / 2 - CELL_SIZE * 3),
-		c.int(SCREEN_HEIGHT - CELL_SIZE),
-		CELL_SIZE,
-		rl.Color{200, 200, 200, 255},
-	)
-}
-
 draw_countdown :: proc(timer: f32) {
 	sec := int(timer) + 1
 	if sec < 1 || sec > 4 {
@@ -1488,14 +1450,6 @@ draw_countdown :: proc(timer: f32) {
 		fsize,
 		rl.Color{255, 255, 100, 255},
 	)
-}
-
-draw_debug_overlay :: proc(frame_count: u64) {
-	fps := rl.GetFPS()
-	x: c.int = 10
-	y: c.int = SCREEN_HEIGHT - 40
-	text := rl.TextFormat("FPS: %d  Frame: %d", fps, frame_count)
-	rl.DrawText(text, x, y, 20, rl.Color{255, 255, 255, 200})
 }
 
 draw_game_over :: proc(final_score: int, playing: Playing) {
