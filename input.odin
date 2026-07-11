@@ -22,10 +22,23 @@ controller_confirm :: proc() -> bool {
 
 apply_dir :: proc(snake: ^Snake, dir: Direction) {
 	switch dir {
-	case .Up:    if snake.direction != .Down { snake.next_direction = dir }
-	case .Down:  if snake.direction != .Up   { snake.next_direction = dir }
-	case .Left:  if snake.direction != .Right { snake.next_direction = dir }
-	case .Right: if snake.direction != .Left  { snake.next_direction = dir }
+	case .Up:
+		if snake.direction != .Down && snake.direction != .Up {
+			snake.next_direction = dir
+		}
+
+	case .Down:
+		if snake.direction != .Up && snake.direction != .Down {
+			snake.next_direction = dir
+		}
+	case .Left:
+		if snake.direction != .Right && snake.direction != .Left {
+			snake.next_direction = dir
+		}
+	case .Right:
+		if snake.direction != .Left && snake.direction != .Right {
+			snake.next_direction = dir
+		}
 	}
 }
 
@@ -66,10 +79,10 @@ handle_input :: proc(snake: ^Snake) {
 		axis_left := raylib.GetGamepadAxisMovement(0, .LEFT_X) < -GAMEPAD_DEADZONE
 		axis_right := raylib.GetGamepadAxisMovement(0, .LEFT_X) > GAMEPAD_DEADZONE
 
-		if axis_up && !prev_axis_up { last = .Up }
-		if axis_down && !prev_axis_down { last = .Down }
-		if axis_left && !prev_axis_left { last = .Left }
-		if axis_right && !prev_axis_right { last = .Right }
+		if axis_up && !prev_axis_up {last = .Up}
+		if axis_down && !prev_axis_down {last = .Down}
+		if axis_left && !prev_axis_left {last = .Left}
+		if axis_right && !prev_axis_right {last = .Right}
 
 		prev_axis_up = axis_up
 		prev_axis_down = axis_down
@@ -85,10 +98,10 @@ handle_input :: proc(snake: ^Snake) {
 			jleft := joy_axis[0] < -JZ || joy_axis[6] < -JZ
 			jright := joy_axis[0] > JZ || joy_axis[6] > JZ
 
-			if jup && !prev_joy_up { last = .Up }
-			if jdown && !prev_joy_down { last = .Down }
-			if jleft && !prev_joy_left { last = .Left }
-			if jright && !prev_joy_right { last = .Right }
+			if jup && !prev_joy_up {last = .Up}
+			if jdown && !prev_joy_down {last = .Down}
+			if jleft && !prev_joy_left {last = .Left}
+			if jright && !prev_joy_right {last = .Right}
 
 			prev_joy_up = jup
 			prev_joy_down = jdown
