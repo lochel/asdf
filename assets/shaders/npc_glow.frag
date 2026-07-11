@@ -13,7 +13,7 @@ void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
     float t = u_time;
-    float pulse = sin(t * 10.0) * 0.1 + 0.9;
+    float pulse = sin(t * 8.0) * 0.1 + 0.9;
     vec3 color = texelColor.rgb * pulse;
     finalColor = vec4(color, texelColor.a) * fragColor * colDiffuse;
 }
