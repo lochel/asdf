@@ -761,10 +761,12 @@ advance_level :: proc(
 
 perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets: ^Assets) {
 	playing.splits_triggered[split_score] = true
+
+	if len(snake.body) < 6 do return
+
 	playing.foul_apples += 1
 
 	mid := len(snake.body) / 2
-	if mid < 1 do return
 
 	npc_body := make([dynamic]Vec2)
 	npc_dirs := make([dynamic]Direction)

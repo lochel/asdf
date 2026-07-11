@@ -35,6 +35,8 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 	npc_dirs_arr := make([dynamic]Direction)
 	append(&npc_body, pos)
 	append(&npc_body, pos + npc_offsets[idx])
+	append(&npc_body, pos + npc_offsets[idx] * 2)
+	append(&npc_dirs_arr, npc_dirs[idx])
 	append(&npc_dirs_arr, npc_dirs[idx])
 	append(&npc_dirs_arr, npc_dirs[idx])
 	append(

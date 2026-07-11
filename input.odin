@@ -26,7 +26,6 @@ apply_dir :: proc(snake: ^Snake, dir: Direction) {
 		if snake.direction != .Down && snake.direction != .Up {
 			snake.next_direction = dir
 		}
-
 	case .Down:
 		if snake.direction != .Up && snake.direction != .Down {
 			snake.next_direction = dir
