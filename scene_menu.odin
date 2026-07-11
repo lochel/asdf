@@ -56,8 +56,11 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 menu_init :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 
-	LEVELS = make([]LevelDef, len(LEVEL_FILES))
-	for f, i in LEVEL_FILES {
+	level_files := init_level_files()
+	defer delete(level_files)
+
+	LEVELS = make([]LevelDef, len(level_files))
+	for f, i in level_files {
 		LEVELS[i] = load_level_meta(f)
 	}
 
