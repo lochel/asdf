@@ -38,18 +38,14 @@ load_level_meta :: proc(path: string) -> LevelDef {
 	json_str := strings.join(json_parts[:], "")
 	defer delete(json_str)
 
-	header: LevelHeader
-	parse_err := json.unmarshal(transmute([]byte)json_str, &header)
+	level: LevelDef
+	parse_err := json.unmarshal(transmute([]byte)json_str, &level)
 	if parse_err != nil {
 		panic("Failed to parse level JSON header")
 	}
 
-	return LevelDef{
-		file = path,
-		label = header.label,
-		gate_score = header.gate_score,
-		split_scores = header.split_scores,
-	}
+	level.file = path
+	return level
 }
 
 load_tilemap :: proc(path: string) -> Tilemap {

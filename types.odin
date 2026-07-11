@@ -20,7 +20,7 @@ Snake :: struct {
 }
 
 npc_tint :: proc(idx: int) -> raylib.Color {
-	tints := []raylib.Color{
+	tints := []raylib.Color {
 		{240, 80, 80, 255},
 		{220, 60, 40, 255},
 		{255, 120, 90, 255},
@@ -68,14 +68,8 @@ Tilemap :: struct {
 }
 
 LevelDef :: struct {
-	file:          string,
-	label:         string,
-	gate_score:    int,
-	split_scores:  []int,
-}
-
-LevelHeader :: struct {
+	file:         string,
 	label:        string,
-	gate_score:   int   `json:"gate_score"`,
+	gate_score:   int `json:"gate_score"`,
 	split_scores: []int `json:"split_scores"`,
 }
