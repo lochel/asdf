@@ -15,7 +15,7 @@ void main()
     vec3 base = texelColor.rgb;
 
     vec2 pos = gl_FragCoord.xy;
-    float t = u_time * 0.15;
+    float t = u_time;
 
     float wave = sin(pos.x * 0.012 + pos.y * 0.015 + t) * 0.035;
     wave += sin(pos.y * 0.018 - t * 0.25) * 0.025;

@@ -212,7 +212,7 @@ puddle_tint :: proc(pair_idx: int) -> raylib.Color {
 
 draw_tilemap :: proc(tm: Tilemap, assets: Assets, remaining: int) {
 	t := f32(raylib.GetTime())
-	t = t - f32(int(t / 1000)) * 1000
+	t = t - f32(int(t / 10000)) * 10000
 	if assets.sprites.grass_shader_valid {
 		if assets.sprites.grass_time_loc >= 0 {
 			raylib.SetShaderValue(assets.sprites.grass_shader, assets.sprites.grass_time_loc, &t, .FLOAT)
