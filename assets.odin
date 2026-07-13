@@ -20,9 +20,11 @@ Sprites :: struct {
 	grass_shader:          raylib.Shader,
 	grass_time_loc:        c.int,
 	grass_shader_valid:    bool,
-	npc_glow_shader:       raylib.Shader,
-	npc_glow_time_loc:     c.int,
-	npc_glow_shader_valid: bool,
+	npc_glow_shader:              raylib.Shader,
+	npc_glow_time_loc:            c.int,
+	npc_glow_body_progress_loc:   c.int,
+	npc_glow_body_pos_loc:        c.int,
+	npc_glow_shader_valid:        bool,
 }
 
 Sounds :: struct {
@@ -151,6 +153,8 @@ load_sprites :: proc() -> Sprites {
 		s.grass_shader_valid = raylib.IsShaderValid(s.grass_shader)
 		s.npc_glow_shader = raylib.LoadShader(nil, "assets/shaders/npc_glow.frag")
 		s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
+		s.npc_glow_body_progress_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_body_progress")
+		s.npc_glow_body_pos_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_body_pos")
 		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
 	}
 

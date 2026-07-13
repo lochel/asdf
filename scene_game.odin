@@ -1284,6 +1284,27 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 
 	for i in 0 ..< n {
 		pos := npc.body[i]
+
+		if assets.sprites.npc_glow_shader_valid && assets.sprites.npc_glow_body_progress_loc >= 0 {
+			body_progress := f32(head_idx - i) / f32(max(n - 1, 1))
+			rl.SetShaderValue(
+				assets.sprites.npc_glow_shader,
+				assets.sprites.npc_glow_body_progress_loc,
+				&body_progress,
+				.FLOAT,
+			)
+		}
+
+		if assets.sprites.npc_glow_shader_valid && assets.sprites.npc_glow_body_pos_loc >= 0 {
+			body_pos := [2]f32{f32(pos.x) * CELL_SIZE, f32(pos.y) * CELL_SIZE}
+			rl.SetShaderValue(
+				assets.sprites.npc_glow_shader,
+				assets.sprites.npc_glow_body_pos_loc,
+				&body_pos,
+				.VEC2,
+			)
+		}
+
 		if i == head_idx {
 			rl.DrawTexture(
 				assets.sprites.head[npc.head_dirs[head_idx]],
