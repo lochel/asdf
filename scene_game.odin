@@ -1279,6 +1279,24 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 				.FLOAT,
 			)
 		}
+		if assets.sprites.npc_glow_flicker_offset_loc >= 0 {
+			flicker_offset := f32(tint.r) * 0.1 + f32(tint.g) * 0.3 + f32(tint.b) * 0.7
+			rl.SetShaderValue(
+				assets.sprites.npc_glow_shader,
+				assets.sprites.npc_glow_flicker_offset_loc,
+				&flicker_offset,
+				.FLOAT,
+			)
+		}
+		if assets.sprites.npc_glow_tint_offset_loc >= 0 {
+			tint_offset := f32(tint.r) * 0.05 + f32(tint.g) * 0.15 + f32(tint.b) * 0.4
+			rl.SetShaderValue(
+				assets.sprites.npc_glow_shader,
+				assets.sprites.npc_glow_tint_offset_loc,
+				&tint_offset,
+				.FLOAT,
+			)
+		}
 		rl.BeginShaderMode(assets.sprites.npc_glow_shader)
 	}
 

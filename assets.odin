@@ -24,6 +24,8 @@ Sprites :: struct {
 	npc_glow_time_loc:            c.int,
 	npc_glow_body_progress_loc:   c.int,
 	npc_glow_body_pos_loc:        c.int,
+	npc_glow_flicker_offset_loc:  c.int,
+	npc_glow_tint_offset_loc:     c.int,
 	npc_glow_shader_valid:        bool,
 }
 
@@ -155,6 +157,8 @@ load_sprites :: proc() -> Sprites {
 		s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
 		s.npc_glow_body_progress_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_body_progress")
 		s.npc_glow_body_pos_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_body_pos")
+		s.npc_glow_flicker_offset_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_flicker_offset")
+		s.npc_glow_tint_offset_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_tint_offset")
 		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
 	}
 
