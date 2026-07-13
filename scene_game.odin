@@ -237,7 +237,7 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	if gd.game_over {
-		draw_hud(gd.playing)
+		draw_hud(gd.playing, gd.eng.config.width)
 		if gd.tilemap_loaded {
 			rl.BeginMode2D(camera)
 			gd.tilemap_actor.remaining = 0
@@ -246,13 +246,13 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		} else {
 			rl.ClearBackground(rl.Color{20, 20, 30, 255})
 		}
-		draw_game_over(gd.final_score, gd.playing)
+		draw_game_over(gd.final_score, gd.playing, gd.eng.config.width, gd.eng.config.height)
 		return
 	}
 
 	playing := gd.playing
 
-	draw_hud(playing)
+	draw_hud(playing, gd.eng.config.width)
 	rl.BeginMode2D(camera)
 	gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
 	draw_food(gd.food, assets_global)
@@ -308,16 +308,18 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	}
 	rl.EndMode2D()
 	if playing.countdown > 0 {
-		draw_countdown(playing.countdown)
+		draw_countdown(playing.countdown, gd.eng.config.width, gd.eng.config.height)
 	}
 	if playing.paused {
-		rl.DrawRectangle(0, HUD_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, rl.Color{0, 0, 0, 120})
+		sw := gd.eng.config.width
+		sh := gd.eng.config.height
+		rl.DrawRectangle(0, HUD_HEIGHT, sw, sh, rl.Color{0, 0, 0, 120})
 		fs1 := CELL_SIZE * 2
 		tw1 := rl.MeasureText("PAUSED", c.int(fs1))
 		rl.DrawText(
 			"PAUSED",
-			c.int((SCREEN_WIDTH - tw1) / 2),
-			c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs1) / 2 - CELL_SIZE),
+			c.int((sw - tw1) / 2),
+			c.int(HUD_HEIGHT + (int(sh) - fs1) / 2 - CELL_SIZE),
 			c.int(fs1),
 			rl.RAYWHITE,
 		)
@@ -325,8 +327,8 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 		tw2 := rl.MeasureText("Press ESC or P to resume", c.int(fs2))
 		rl.DrawText(
 			"Press ESC or P to resume",
-			c.int((SCREEN_WIDTH - tw2) / 2),
-			c.int(HUD_HEIGHT + (int(SCREEN_HEIGHT) - fs2) / 2 + CELL_SIZE),
+			c.int((sw - tw2) / 2),
+			c.int(HUD_HEIGHT + (int(sh) - fs2) / 2 + CELL_SIZE),
 			c.int(fs2),
 			rl.Color{200, 200, 200, 255},
 		)
@@ -1358,11 +1360,11 @@ draw_foul_food :: proc(pos: Vec2, assets: Assets) {
 	)
 }
 
-draw_hud :: proc(playing: Playing) {
+draw_hud :: proc(playing: Playing, screen_width: i32) {
 	level := LEVELS[playing.current_level]
 
-	rl.DrawRectangle(0, 0, SCREEN_WIDTH, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
-	rl.DrawLine(0, HUD_HEIGHT - 1, SCREEN_WIDTH, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})
+	rl.DrawRectangle(0, 0, screen_width, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
+	rl.DrawLine(0, HUD_HEIGHT - 1, screen_width, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})
 
 	y: c.int = 20
 	fs_big: c.int = 60
@@ -1388,7 +1390,7 @@ draw_hud :: proc(playing: Playing) {
 
 	lives_w: c.int = c.int(playing.lives) * 32
 
-	right := c.int(SCREEN_WIDTH) - 12
+	right := c.int(screen_width) - 12
 
 	if !playing.gate_open {
 		right -= gate_w
@@ -1441,7 +1443,7 @@ draw_hud :: proc(playing: Playing) {
 	}
 }
 
-draw_countdown :: proc(timer: f32) {
+draw_countdown :: proc(timer: f32, screen_width: i32, screen_height: i32) {
 	sec := int(timer) + 1
 	if sec < 1 || sec > 4 {
 		return
@@ -1461,31 +1463,31 @@ draw_countdown :: proc(timer: f32) {
 	tw := rl.MeasureText(text, fsize)
 	rl.DrawText(
 		text,
-		(SCREEN_WIDTH - tw) / 2,
-		SCREEN_HEIGHT / 2 - fsize,
+		(screen_width - tw) / 2,
+		screen_height / 2 - fsize,
 		fsize,
 		rl.Color{255, 255, 100, 255},
 	)
 }
 
-draw_game_over :: proc(final_score: int, playing: Playing) {
+draw_game_over :: proc(final_score: int, playing: Playing, screen_width: i32, screen_height: i32) {
 	fsize1: c.int = CELL_SIZE * 3
 	fsize2: c.int = CELL_SIZE * 2
 	fsize3: c.int = CELL_SIZE
 	fsize4: c.int = CELL_SIZE / 2 + 4
 
-	cy: c.int = SCREEN_HEIGHT / 2 - fsize1
+	cy: c.int = screen_height / 2 - fsize1
 
 	// GAME OVER!
 	t1: cstring = "GAME OVER!"
 	w1 := rl.MeasureText(t1, fsize1)
-	rl.DrawText(t1, (SCREEN_WIDTH - w1) / 2, cy, fsize1, rl.RED)
+	rl.DrawText(t1, (screen_width - w1) / 2, cy, fsize1, rl.RED)
 	cy += fsize1 + 10
 
 	// Total Score
 	t2 := rl.TextFormat("Total Score: %d", final_score)
 	w2 := rl.MeasureText(t2, fsize2)
-	rl.DrawText(t2, (SCREEN_WIDTH - w2) / 2, cy, fsize2, rl.RAYWHITE)
+	rl.DrawText(t2, (screen_width - w2) / 2, cy, fsize2, rl.RAYWHITE)
 	cy += fsize2 + 20
 
 	// Breakdown
@@ -1500,7 +1502,7 @@ draw_game_over :: proc(final_score: int, playing: Playing) {
 	details[2] = rl.TextFormat("NPC kills:   %d  (+%d)", playing.npc_kills, playing.npc_kills * 10)
 	for &txt in details {
 		w := rl.MeasureText(txt, fsize4)
-		rl.DrawText(txt, (SCREEN_WIDTH - w) / 2, cy, fsize4, detail_color)
+		rl.DrawText(txt, (screen_width - w) / 2, cy, fsize4, detail_color)
 		cy += fsize4 + 6
 	}
 
@@ -1508,5 +1510,5 @@ draw_game_over :: proc(final_score: int, playing: Playing) {
 	// Press SPACE
 	t3: cstring = "Press SPACE to restart"
 	w3 := rl.MeasureText(t3, fsize3)
-	rl.DrawText(t3, (SCREEN_WIDTH - w3) / 2, cy, fsize3, rl.GRAY)
+	rl.DrawText(t3, (screen_width - w3) / 2, cy, fsize3, rl.GRAY)
 }

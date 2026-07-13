@@ -232,10 +232,12 @@ menu_render :: proc(ctx: ^engine.Scene_Context) {
 	if mc.tilemap.has_start {
 		mc.tilemap.tiles[mc.tilemap.start_pos.y][mc.tilemap.start_pos.x] = .Start
 	}
-	rl.DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, rl.Color{0, 0, 0, 65})
+	sw := mc.eng.config.width
+	sh := mc.eng.config.height
+	rl.DrawRectangle(0, 0, sw, sh, rl.Color{0, 0, 0, 65})
 
-	rl.DrawRectangle(0, 0, SCREEN_WIDTH, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
-	rl.DrawLine(0, HUD_HEIGHT - 1, SCREEN_WIDTH, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})
+	rl.DrawRectangle(0, 0, sw, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
+	rl.DrawLine(0, HUD_HEIGHT - 1, sw, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})
 
 	fs_big: c.int = 60
 	fs_sml: c.int = 30
@@ -253,10 +255,10 @@ menu_render :: proc(ctx: ^engine.Scene_Context) {
 	title: cstring = "SNAKE"
 	title_size: c.int = CELL_SIZE * 4
 	tw_title := rl.MeasureText(title, title_size)
-	rl.DrawText(title, (SCREEN_WIDTH - tw_title) / 2, CELL_SIZE * 4, title_size, rl.GREEN)
+	rl.DrawText(title, (sw - tw_title) / 2, CELL_SIZE * 4, title_size, rl.GREEN)
 
 	hint: cstring = "Press SPACE to start"
 	hint_size: c.int = CELL_SIZE
 	hw := rl.MeasureText(hint, hint_size)
-	rl.DrawText(hint, (SCREEN_WIDTH - hw) / 2, SCREEN_HEIGHT - CELL_SIZE * 3, hint_size, rl.GREEN)
+	rl.DrawText(hint, (sw - hw) / 2, sh - CELL_SIZE * 3, hint_size, rl.GREEN)
 }
