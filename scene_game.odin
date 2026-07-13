@@ -1313,16 +1313,6 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 			)
 		}
 
-		if assets.sprites.npc_glow_shader_valid && assets.sprites.npc_glow_body_pos_loc >= 0 {
-			body_pos := [2]f32{f32(pos.x) * CELL_SIZE, f32(pos.y) * CELL_SIZE}
-			rl.SetShaderValue(
-				assets.sprites.npc_glow_shader,
-				assets.sprites.npc_glow_body_pos_loc,
-				&body_pos,
-				.VEC2,
-			)
-		}
-
 		if i == head_idx {
 			rl.DrawTexture(
 				assets.sprites.head[npc.head_dirs[head_idx]],
