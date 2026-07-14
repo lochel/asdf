@@ -6,14 +6,14 @@ import "engine"
 import rl "vendor:raylib"
 
 Menu_Context :: struct {
-	using scene:      engine.Scene_Context,
-	demo_npcs:        [dynamic]NpcSnake,
-	demo_food:        Food,
-	tilemap:          Tilemap,
-	tilemap_loaded:   bool,
-	tilemap_actor:    TilemapActor,
-	npc_actor:        NpcSnakeCollectionActor,
-	food_actor:       FoodActor,
+	using scene:    engine.Scene_Context,
+	demo_npcs:      [dynamic]NpcSnake,
+	demo_food:      Food,
+	tilemap:        Tilemap,
+	tilemap_loaded: bool,
+	tilemap_actor:  TilemapActor,
+	npc_actor:      NpcSnakeCollectionActor,
+	food_actor:     FoodActor,
 }
 
 spawn_demo_npc :: proc(m: ^Menu_Context) {
@@ -53,22 +53,6 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 	)
 }
 
-menu_deinit :: proc(ctx: ^engine.Scene_Context) {
-	mc := cast(^Menu_Context)ctx
-	for npc in mc.demo_npcs {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	delete(mc.demo_npcs)
-	delete(snake_global.body)
-	delete(snake_global.head_dirs)
-	if mc.tilemap_loaded {
-		unload_tilemap(&mc.tilemap)
-		mc.tilemap_loaded = false
-	}
-}
-
 menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 
@@ -90,20 +74,20 @@ menu_enter :: proc(ctx: ^engine.Scene_Context) {
 
 		spawn_food(&snake_global, &mc.demo_food, mc.tilemap, nil)
 
-		mc.tilemap_actor = TilemapActor{
-			actor    = {scene = &mc.scene, render = tilemap_actor_render},
-			tilemap  = &mc.tilemap,
-			assets   = &assets_global,
+		mc.tilemap_actor = TilemapActor {
+			actor = {scene = &mc.scene, render = tilemap_actor_render},
+			tilemap = &mc.tilemap,
+			assets = &assets_global,
 			remaining = LEVELS[0].gate_score,
 		}
-		mc.npc_actor = NpcSnakeCollectionActor{
-			actor  = {scene = &mc.scene, render = npc_snake_collection_render},
+		mc.npc_actor = NpcSnakeCollectionActor {
+			actor = {scene = &mc.scene, render = npc_snake_collection_render},
 			snakes = &mc.demo_npcs,
 			assets = &assets_global,
 		}
-		mc.food_actor = FoodActor{
-			actor  = {scene = &mc.scene, render = food_actor_render},
-			food   = &mc.demo_food,
+		mc.food_actor = FoodActor {
+			actor = {scene = &mc.scene, render = food_actor_render},
+			food = &mc.demo_food,
 			assets = &assets_global,
 		}
 	}
@@ -130,6 +114,19 @@ menu_leave :: proc(ctx: ^engine.Scene_Context) {
 		delete(npc.debug_path)
 	}
 	clear(&mc.demo_npcs)
+
+	for npc in mc.demo_npcs {
+		delete(npc.body)
+		delete(npc.head_dirs)
+		delete(npc.debug_path)
+	}
+	delete(mc.demo_npcs)
+	delete(snake_global.body)
+	delete(snake_global.head_dirs)
+	if mc.tilemap_loaded {
+		unload_tilemap(&mc.tilemap)
+		mc.tilemap_loaded = false
+	}
 }
 
 menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
