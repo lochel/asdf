@@ -35,8 +35,7 @@ Game_Context :: struct {
 
 game_init :: proc(ctx: ^engine.Scene_Context) {
 	gd := cast(^Game_Context)ctx
-
-	assets_global = load_assets()
+	_ = gd
 }
 
 game_deinit :: proc(ctx: ^engine.Scene_Context) {
