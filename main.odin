@@ -15,12 +15,10 @@ main :: proc() {
 
 	engine.enable_audio(&app)
 
-	preload := Preload_Context {
-		scene = {
-			init   = preload_init,
-			deinit = preload_deinit,
-			render = preload_render,
-		},
+	preload := engine.Scene_Context {
+		init   = preload_init,
+		deinit = preload_deinit,
+		render = preload_render,
 	}
 
 	menu := Menu_Context {
@@ -45,7 +43,7 @@ main :: proc() {
 		},
 	}
 
-	engine.addScene(&app, "preload", &preload.scene)
+	engine.addScene(&app, "preload", &preload)
 	engine.addScene(&app, "menu", &menu.scene)
 	engine.addScene(&app, "game", &game.scene)
 

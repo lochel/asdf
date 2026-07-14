@@ -4,13 +4,7 @@ import "core:c"
 import "engine"
 import rl "vendor:raylib"
 
-Preload_Context :: struct {
-	using scene: engine.Scene_Context,
-}
-
 preload_init :: proc(ctx: ^engine.Scene_Context) {
-	pc := cast(^Preload_Context)ctx
-
 	level_files := init_level_files()
 	defer delete(level_files)
 
@@ -33,10 +27,8 @@ preload_deinit :: proc(ctx: ^engine.Scene_Context) {
 }
 
 preload_render :: proc(ctx: ^engine.Scene_Context) {
-	pc := cast(^Preload_Context)ctx
-
-	sw := pc.eng.config.width
-	sh := pc.eng.config.height
+	sw := ctx.eng.config.width
+	sh := ctx.eng.config.height
 
 	rl.ClearBackground(rl.Color{20, 20, 30, 255})
 
@@ -45,5 +37,5 @@ preload_render :: proc(ctx: ^engine.Scene_Context) {
 	tw := rl.MeasureText(text, fsize)
 	rl.DrawText(text, (sw - tw) / 2, sh / 2 - fsize / 2, fsize, rl.WHITE)
 
-	engine.switch_scene(pc.eng, engine.getScene(pc.eng, "menu"), .Fade, 1.5)
+	engine.switch_scene(ctx.eng, engine.getScene(ctx.eng, "menu"), .Fade, 1.5)
 }
