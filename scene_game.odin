@@ -691,9 +691,13 @@ player_died :: proc(
 			delete(npc.debug_path)
 		}
 		delete(playing.npc_snakes)
+		playing.npc_snakes = nil
 		delete(playing.foul_foods)
+		playing.foul_foods = nil
 		delete(playing.splits_triggered)
+		playing.splits_triggered = {}
 		delete(playing.pending_labels)
+		playing.pending_labels = nil
 		return true
 	}
 
@@ -756,9 +760,13 @@ advance_level :: proc(
 			delete(npc.debug_path)
 		}
 		delete(playing.npc_snakes)
+		playing.npc_snakes = nil
 		delete(playing.foul_foods)
+		playing.foul_foods = nil
 		delete(playing.splits_triggered)
+		playing.splits_triggered = {}
 		delete(playing.pending_labels)
+		playing.pending_labels = nil
 		return true
 	}
 
