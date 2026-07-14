@@ -23,6 +23,7 @@ Game_Context :: struct {
 	tilemap:        Tilemap,
 	tilemap_loaded: bool,
 	game_over:      bool,
+	victory:        bool,
 	final_score:    int,
 	prev_level:     int,
 	labels:         [dynamic]FloatingLabel,
@@ -71,10 +72,12 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 		gate_extra       = 0,
 		paused           = false,
 		pending_labels   = {},
+		level_stats      = {},
 	}
 
 	init_game(&gd.snake, &gd.food, &gd.tilemap)
 	gd.game_over = false
+	gd.victory = false
 	gd.final_score = 0
 	gd.prev_level = 0
 	clear(&gd.labels)
@@ -113,6 +116,8 @@ game_leave :: proc(ctx: ^engine.Scene_Context) {
 	gd.playing.splits_triggered = {}
 	delete(gd.playing.pending_labels)
 	gd.playing.pending_labels = nil
+	delete(gd.playing.level_stats)
+	gd.playing.level_stats = nil
 
 	delete(gd.snake.body)
 	delete(gd.snake.head_dirs)
@@ -134,6 +139,16 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	if gd.game_over {
 		if rl.IsKeyPressed(.SPACE) || rl.IsKeyPressed(.ENTER) || controller_confirm() {
 			engine.switch_scene(gd.eng, engine.getScene(gd.eng, "menu"), .Slide_Left, 0.6)
+		}
+		return
+	}
+
+	if gd.victory {
+		if rl.IsKeyPressed(.SPACE) || rl.IsKeyPressed(.ENTER) || controller_confirm() {
+			victory_score = gd.final_score
+			victory_stats = gd.playing.level_stats
+			gd.playing.level_stats = nil
+			engine.switch_scene(gd.eng, engine.getScene(gd.eng, "victory"), .Fade, 0.6)
 		}
 		return
 	}
@@ -168,7 +183,7 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	gd := cast(^Game_Context)ctx
 
-	if gd.game_over || gd.playing.paused {
+	if gd.game_over || gd.victory || gd.playing.paused {
 		return move_delay
 	}
 
@@ -190,7 +205,11 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	}
 	npcs_only := playing.countdown > 0
 	if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, npcs_only) {
-		gd.game_over = true
+		if playing.current_level >= len(LEVELS) {
+			gd.victory = true
+		} else {
+			gd.game_over = true
+		}
 		gd.final_score = playing.total_score + playing.score
 	}
 	if playing.current_level != gd.prev_level {
@@ -246,6 +265,20 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 			rl.ClearBackground(rl.Color{20, 20, 30, 255})
 		}
 		draw_game_over(gd.final_score, gd.playing, gd.eng.config.width, gd.eng.config.height)
+		return
+	}
+
+	if gd.victory {
+		draw_hud(gd.playing, gd.eng.config.width)
+		if gd.tilemap_loaded {
+			rl.BeginMode2D(camera)
+			gd.tilemap_actor.remaining = 0
+			gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
+			rl.EndMode2D()
+		} else {
+			rl.ClearBackground(rl.Color{20, 20, 30, 255})
+		}
+		draw_victory(gd.final_score, gd.eng.config.width, gd.eng.config.height)
 		return
 	}
 
@@ -703,6 +736,17 @@ advance_level :: proc(
 	assets: ^Assets,
 	tm: ^Tilemap,
 ) -> bool {
+	append(
+		&playing.level_stats,
+		LevelStats {
+			label      = LEVELS[playing.current_level].label,
+			apples     = playing.apples,
+			foul_kills = playing.foul_kills,
+			npc_kills  = playing.npc_kills,
+			score      = playing.score,
+		},
+	)
+
 	playing.current_level += 1
 
 	if playing.current_level >= len(LEVELS) {
@@ -1366,7 +1410,8 @@ draw_foul_food :: proc(pos: Vec2, assets: Assets) {
 }
 
 draw_hud :: proc(playing: Playing, screen_width: i32) {
-	level := LEVELS[playing.current_level]
+	level_idx := min(playing.current_level, len(LEVELS) - 1)
+	level := LEVELS[level_idx]
 
 	rl.DrawRectangle(0, 0, screen_width, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
 	rl.DrawLine(0, HUD_HEIGHT - 1, screen_width, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})
@@ -1514,6 +1559,32 @@ draw_game_over :: proc(final_score: int, playing: Playing, screen_width: i32, sc
 	cy += 10
 	// Press SPACE
 	t3: cstring = "Press SPACE to restart"
+	w3 := rl.MeasureText(t3, fsize3)
+	rl.DrawText(t3, (screen_width - w3) / 2, cy, fsize3, rl.GRAY)
+}
+
+draw_victory :: proc(final_score: int, screen_width: i32, screen_height: i32) {
+	fsize1: c.int = CELL_SIZE * 3
+	fsize2: c.int = CELL_SIZE * 2
+	fsize3: c.int = CELL_SIZE
+	fsize4: c.int = CELL_SIZE / 2 + 4
+
+	cy: c.int = screen_height / 2 - fsize1
+
+	// YOU WIN!
+	t1: cstring = "YOU WIN!"
+	w1 := rl.MeasureText(t1, fsize1)
+	rl.DrawText(t1, (screen_width - w1) / 2, cy, fsize1, rl.Color{50, 220, 50, 255})
+	cy += fsize1 + 10
+
+	// Total Score
+	t2 := rl.TextFormat("Total Score: %d", final_score)
+	w2 := rl.MeasureText(t2, fsize2)
+	rl.DrawText(t2, (screen_width - w2) / 2, cy, fsize2, rl.RAYWHITE)
+	cy += fsize2 + 20
+
+	// Press SPACE
+	t3: cstring = "Press SPACE for details"
 	w3 := rl.MeasureText(t3, fsize3)
 	rl.DrawText(t3, (screen_width - w3) / 2, cy, fsize3, rl.GRAY)
 }

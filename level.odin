@@ -3,6 +3,7 @@ package main
 import "core:c"
 import "core:encoding/json"
 import "core:os"
+import "core:sort"
 import "core:strings"
 import "engine"
 import "vendor:raylib"
@@ -55,15 +56,8 @@ init_level_files :: proc() -> []string {
 		append(&files, entry.fullpath)
 	}
 
-	for i := 1; i < len(files); i += 1 {
-		key := files[i]
-		j := i - 1
-		for j >= 0 && strings.compare(files[j], key) > 0 {
-			files[j + 1] = files[j]
-			j -= 1
-		}
-		files[j + 1] = key
-	}
+	files_slice := files[:]
+	sort.sort(sort.slice_interface(&files_slice))
 
 	result := make([]string, len(files))
 	for f, i in files {

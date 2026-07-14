@@ -166,7 +166,7 @@ menu_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	}
 	delete(demo_play.pending_labels)
 
-	return 0.1
+	return 0.04
 }
 
 menu_render :: proc(ctx: ^engine.Scene_Context) {

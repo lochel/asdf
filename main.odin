@@ -45,9 +45,20 @@ main :: proc() {
 		},
 	}
 
+	victory := Victory_Context {
+		scene = {
+			enter  = victory_enter,
+			leave  = victory_leave,
+			input  = victory_input,
+			update = victory_update,
+			render = victory_render,
+		},
+	}
+
 	engine.addScene(&app, "preload", &preload.scene)
 	engine.addScene(&app, "menu", &menu.scene)
 	engine.addScene(&app, "game", &game.scene)
+	engine.addScene(&app, "victory", &victory.scene)
 
 	engine.run(&app, "preload")
 }

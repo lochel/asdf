@@ -5,6 +5,14 @@ PendingLabel :: struct {
 	text: cstring,
 }
 
+LevelStats :: struct {
+	label:      string,
+	apples:     int,
+	foul_kills: int,
+	npc_kills:  int,
+	score:      int,
+}
+
 Playing :: struct {
 	lives:            int,
 	current_level:    int,
@@ -24,4 +32,5 @@ Playing :: struct {
 	gate_extra:       int,
 	paused:           bool,
 	pending_labels:   [dynamic]PendingLabel,
+	level_stats:      [dynamic]LevelStats,
 }
