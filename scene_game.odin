@@ -25,43 +25,14 @@ Game_Context :: struct {
 	game_over:      bool,
 	final_score:    int,
 	prev_level:     int,
-	entered:        bool,
 	labels:         [dynamic]FloatingLabel,
 	tilemap_actor:  TilemapActor,
 	snake_actor:    SnakeActor,
 	npc_actor:      NpcSnakeCollectionActor,
 }
 
-game_init :: proc(ctx: ^engine.Scene_Context) {
-	gd := cast(^Game_Context)ctx
-	_ = gd
-}
-
-game_deinit :: proc(ctx: ^engine.Scene_Context) {
-	gd := cast(^Game_Context)ctx
-
-	for npc in gd.playing.npc_snakes {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	delete(gd.playing.npc_snakes)
-	delete(gd.playing.foul_foods)
-	delete(gd.playing.splits_triggered)
-	delete(gd.playing.pending_labels)
-	delete(gd.snake.body)
-	delete(gd.snake.head_dirs)
-	delete(gd.labels)
-	if gd.tilemap_loaded {
-		unload_tilemap(&gd.tilemap)
-	}
-}
-
 game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd := cast(^Game_Context)ctx
-
-	if gd.entered do return
-	gd.entered = true
 
 	for npc in gd.playing.npc_snakes {
 		delete(npc.body)
@@ -126,12 +97,42 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	}
 }
 
+game_leave :: proc(ctx: ^engine.Scene_Context) {
+	gd := cast(^Game_Context)ctx
+
+	for npc in gd.playing.npc_snakes {
+		delete(npc.body)
+		delete(npc.head_dirs)
+		delete(npc.debug_path)
+	}
+	delete(gd.playing.npc_snakes)
+	gd.playing.npc_snakes = nil
+	delete(gd.playing.foul_foods)
+	gd.playing.foul_foods = nil
+	delete(gd.playing.splits_triggered)
+	gd.playing.splits_triggered = {}
+	delete(gd.playing.pending_labels)
+	gd.playing.pending_labels = nil
+
+	delete(gd.snake.body)
+	delete(gd.snake.head_dirs)
+	gd.snake.body = nil
+	gd.snake.head_dirs = nil
+
+	delete(gd.labels)
+	gd.labels = nil
+
+	if gd.tilemap_loaded {
+		unload_tilemap(&gd.tilemap)
+		gd.tilemap_loaded = false
+	}
+}
+
 game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	gd := cast(^Game_Context)ctx
 
 	if gd.game_over {
 		if rl.IsKeyPressed(.SPACE) || rl.IsKeyPressed(.ENTER) || controller_confirm() {
-			gd.entered = false
 			engine.switch_scene(gd.eng, engine.getScene(gd.eng, "menu"), .Slide_Left, 0.6)
 		}
 		return

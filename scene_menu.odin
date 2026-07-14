@@ -56,64 +56,52 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 
-	if !mc.tilemap_loaded {
-		mc.tilemap = load_tilemap(LEVELS[0].file)
-		mc.tilemap_loaded = true
-		resize_for_tilemap(mc.tilemap, mc.eng)
-
-		clear(&snake_global.body)
-		clear(&snake_global.head_dirs)
-		s := mc.tilemap.start_pos
-		if !mc.tilemap.has_start {
-			s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-		}
-		append(&snake_global.body, s)
-		append(&snake_global.head_dirs, Direction.Right)
-		snake_global.direction = .Right
-		snake_global.next_direction = .Right
-
-		spawn_food(&snake_global, &mc.demo_food, mc.tilemap, nil)
-
-		mc.tilemap_actor = TilemapActor {
-			actor = {scene = &mc.scene, render = tilemap_actor_render},
-			tilemap = &mc.tilemap,
-			assets = &assets_global,
-			remaining = LEVELS[0].gate_score,
-		}
-		mc.npc_actor = NpcSnakeCollectionActor {
-			actor = {scene = &mc.scene, render = npc_snake_collection_render},
-			snakes = &mc.demo_npcs,
-			assets = &assets_global,
-		}
-		mc.food_actor = FoodActor {
-			actor = {scene = &mc.scene, render = food_actor_render},
-			food = &mc.demo_food,
-			assets = &assets_global,
-		}
+	if mc.tilemap_loaded {
+		unload_tilemap(&mc.tilemap)
+		mc.tilemap_loaded = false
 	}
 
-	for npc in mc.demo_npcs {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	clear(&mc.demo_npcs)
+	mc.tilemap = load_tilemap(LEVELS[0].file)
+	mc.tilemap_loaded = true
+	resize_for_tilemap(mc.tilemap, mc.eng)
 
-	spawn_demo_npc(mc)
-	spawn_demo_npc(mc)
-	spawn_demo_npc(mc)
+	clear(&snake_global.body)
+	clear(&snake_global.head_dirs)
+	s := mc.tilemap.start_pos
+	if !mc.tilemap.has_start {
+		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
+	}
+	append(&snake_global.body, s)
+	append(&snake_global.head_dirs, Direction.Right)
+	snake_global.direction = .Right
+	snake_global.next_direction = .Right
 
 	spawn_food(&snake_global, &mc.demo_food, mc.tilemap, nil)
+
+	mc.tilemap_actor = TilemapActor {
+		actor = {scene = &mc.scene, render = tilemap_actor_render},
+		tilemap = &mc.tilemap,
+		assets = &assets_global,
+		remaining = LEVELS[0].gate_score,
+	}
+	mc.npc_actor = NpcSnakeCollectionActor {
+		actor = {scene = &mc.scene, render = npc_snake_collection_render},
+		snakes = &mc.demo_npcs,
+		assets = &assets_global,
+	}
+	mc.food_actor = FoodActor {
+		actor = {scene = &mc.scene, render = food_actor_render},
+		food = &mc.demo_food,
+		assets = &assets_global,
+	}
+
+	spawn_demo_npc(mc)
+	spawn_demo_npc(mc)
+	spawn_demo_npc(mc)
 }
 
 menu_leave :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
-	for npc in mc.demo_npcs {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	clear(&mc.demo_npcs)
 
 	for npc in mc.demo_npcs {
 		delete(npc.body)
@@ -121,8 +109,13 @@ menu_leave :: proc(ctx: ^engine.Scene_Context) {
 		delete(npc.debug_path)
 	}
 	delete(mc.demo_npcs)
+	mc.demo_npcs = nil
+
 	delete(snake_global.body)
 	delete(snake_global.head_dirs)
+	snake_global.body = nil
+	snake_global.head_dirs = nil
+
 	if mc.tilemap_loaded {
 		unload_tilemap(&mc.tilemap)
 		mc.tilemap_loaded = false

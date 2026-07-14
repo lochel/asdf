@@ -4,7 +4,14 @@ import "core:c"
 import "engine"
 import rl "vendor:raylib"
 
+Preload_Context :: struct {
+	using scene: engine.Scene_Context,
+	ready: bool,
+}
+
 preload_init :: proc(ctx: ^engine.Scene_Context) {
+	pc := cast(^Preload_Context)ctx
+
 	level_files := init_level_files()
 	defer delete(level_files)
 
@@ -14,6 +21,8 @@ preload_init :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	assets_global = load_assets()
+
+	pc.ready = true
 }
 
 preload_deinit :: proc(ctx: ^engine.Scene_Context) {
@@ -26,6 +35,14 @@ preload_deinit :: proc(ctx: ^engine.Scene_Context) {
 	delete(LEVELS)
 }
 
+preload_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
+	pc := cast(^Preload_Context)ctx
+	_ = dt
+	if pc.ready {
+		engine.switch_scene(ctx.eng, engine.getScene(ctx.eng, "menu"), .Fade, 1.5)
+	}
+}
+
 preload_render :: proc(ctx: ^engine.Scene_Context) {
 	sw := ctx.eng.config.width
 	sh := ctx.eng.config.height
@@ -36,6 +53,4 @@ preload_render :: proc(ctx: ^engine.Scene_Context) {
 	fsize: c.int = 40
 	tw := rl.MeasureText(text, fsize)
 	rl.DrawText(text, (sw - tw) / 2, sh / 2 - fsize / 2, fsize, rl.WHITE)
-
-	engine.switch_scene(ctx.eng, engine.getScene(ctx.eng, "menu"), .Fade, 1.5)
 }
