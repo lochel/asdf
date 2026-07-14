@@ -6,7 +6,6 @@ import rl "vendor:raylib"
 
 Preload_Context :: struct {
 	using scene: engine.Scene_Context,
-	loaded:     bool,
 }
 
 preload_init :: proc(ctx: ^engine.Scene_Context) {
@@ -21,8 +20,16 @@ preload_init :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	assets_global = load_assets()
+}
 
-	pc.loaded = true
+preload_deinit :: proc(ctx: ^engine.Scene_Context) {
+	unload_assets(assets_global)
+
+	for l in LEVELS {
+		delete(l.label)
+		delete(l.split_scores)
+	}
+	delete(LEVELS)
 }
 
 preload_render :: proc(ctx: ^engine.Scene_Context) {
@@ -38,7 +45,5 @@ preload_render :: proc(ctx: ^engine.Scene_Context) {
 	tw := rl.MeasureText(text, fsize)
 	rl.DrawText(text, (sw - tw) / 2, sh / 2 - fsize / 2, fsize, rl.WHITE)
 
-	if pc.loaded {
-		engine.switch_scene(pc.eng, engine.getScene(pc.eng, "menu"), .Fade, 1.5)
-	}
+	engine.switch_scene(pc.eng, engine.getScene(pc.eng, "menu"), .Fade, 1.5)
 }

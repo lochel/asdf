@@ -53,48 +53,6 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 	)
 }
 
-menu_init :: proc(ctx: ^engine.Scene_Context) {
-	mc := cast(^Menu_Context)ctx
-
-	mc.tilemap = load_tilemap(LEVELS[0].file)
-	mc.tilemap_loaded = true
-	resize_for_tilemap(mc.tilemap, mc.eng)
-
-	clear(&snake_global.body)
-	clear(&snake_global.head_dirs)
-	s := mc.tilemap.start_pos
-	if !mc.tilemap.has_start {
-		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-	}
-	append(&snake_global.body, s)
-	append(&snake_global.head_dirs, Direction.Right)
-	snake_global.direction = .Right
-	snake_global.next_direction = .Right
-
-	spawn_food(&snake_global, &mc.demo_food, mc.tilemap, nil)
-
-	spawn_demo_npc(mc)
-	spawn_demo_npc(mc)
-	spawn_demo_npc(mc)
-
-	mc.tilemap_actor = TilemapActor{
-		actor    = {scene = &mc.scene, render = tilemap_actor_render},
-		tilemap  = &mc.tilemap,
-		assets   = &assets_global,
-		remaining = LEVELS[0].gate_score,
-	}
-	mc.npc_actor = NpcSnakeCollectionActor{
-		actor  = {scene = &mc.scene, render = npc_snake_collection_render},
-		snakes = &mc.demo_npcs,
-		assets = &assets_global,
-	}
-	mc.food_actor = FoodActor{
-		actor  = {scene = &mc.scene, render = food_actor_render},
-		food   = &mc.demo_food,
-		assets = &assets_global,
-	}
-}
-
 menu_deinit :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 	for npc in mc.demo_npcs {
@@ -113,6 +71,42 @@ menu_deinit :: proc(ctx: ^engine.Scene_Context) {
 
 menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
+
+	if !mc.tilemap_loaded {
+		mc.tilemap = load_tilemap(LEVELS[0].file)
+		mc.tilemap_loaded = true
+		resize_for_tilemap(mc.tilemap, mc.eng)
+
+		clear(&snake_global.body)
+		clear(&snake_global.head_dirs)
+		s := mc.tilemap.start_pos
+		if !mc.tilemap.has_start {
+			s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
+		}
+		append(&snake_global.body, s)
+		append(&snake_global.head_dirs, Direction.Right)
+		snake_global.direction = .Right
+		snake_global.next_direction = .Right
+
+		spawn_food(&snake_global, &mc.demo_food, mc.tilemap, nil)
+
+		mc.tilemap_actor = TilemapActor{
+			actor    = {scene = &mc.scene, render = tilemap_actor_render},
+			tilemap  = &mc.tilemap,
+			assets   = &assets_global,
+			remaining = LEVELS[0].gate_score,
+		}
+		mc.npc_actor = NpcSnakeCollectionActor{
+			actor  = {scene = &mc.scene, render = npc_snake_collection_render},
+			snakes = &mc.demo_npcs,
+			assets = &assets_global,
+		}
+		mc.food_actor = FoodActor{
+			actor  = {scene = &mc.scene, render = food_actor_render},
+			food   = &mc.demo_food,
+			assets = &assets_global,
+		}
+	}
 
 	for npc in mc.demo_npcs {
 		delete(npc.body)

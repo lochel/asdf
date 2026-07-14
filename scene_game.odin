@@ -56,14 +56,6 @@ game_deinit :: proc(ctx: ^engine.Scene_Context) {
 	if gd.tilemap_loaded {
 		unload_tilemap(&gd.tilemap)
 	}
-
-	unload_assets(assets_global)
-
-	for l in LEVELS {
-		delete(l.label)
-		delete(l.split_scores)
-	}
-	delete(LEVELS)
 }
 
 game_enter :: proc(ctx: ^engine.Scene_Context) {

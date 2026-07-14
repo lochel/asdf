@@ -17,7 +17,8 @@ main :: proc() {
 
 	preload := Preload_Context {
 		scene = {
-			init  = preload_init,
+			init   = preload_init,
+			deinit = preload_deinit,
 			render = preload_render,
 		},
 	}
