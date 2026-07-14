@@ -4,28 +4,28 @@ import "core:c"
 import "vendor:raylib"
 
 Sprites :: struct {
-	apple:                 raylib.Texture2D,
-	foul_apple:            raylib.Texture2D,
-	head:                  [Direction]raylib.Texture2D,
-	tail:                  [Direction]raylib.Texture2D,
-	body_horizontal:       raylib.Texture2D,
-	body_vertical:         raylib.Texture2D,
-	body_topleft:          raylib.Texture2D,
-	body_topright:         raylib.Texture2D,
-	body_bottomleft:       raylib.Texture2D,
-	body_bottomright:      raylib.Texture2D,
-	grass:                 raylib.Texture2D,
-	wall:                  raylib.Texture2D,
-	puddle:                raylib.Texture2D,
-	grass_shader:          raylib.Shader,
-	grass_time_loc:        c.int,
-	grass_shader_valid:    bool,
-	npc_glow_shader:              raylib.Shader,
-	npc_glow_time_loc:            c.int,
-	npc_glow_body_progress_loc:   c.int,
-	npc_glow_flicker_offset_loc:  c.int,
-	npc_glow_tint_offset_loc:     c.int,
-	npc_glow_shader_valid:        bool,
+	apple:                       raylib.Texture2D,
+	foul_apple:                  raylib.Texture2D,
+	head:                        [Direction]raylib.Texture2D,
+	tail:                        [Direction]raylib.Texture2D,
+	body_horizontal:             raylib.Texture2D,
+	body_vertical:               raylib.Texture2D,
+	body_topleft:                raylib.Texture2D,
+	body_topright:               raylib.Texture2D,
+	body_bottomleft:             raylib.Texture2D,
+	body_bottomright:            raylib.Texture2D,
+	grass:                       raylib.Texture2D,
+	wall:                        raylib.Texture2D,
+	puddle:                      raylib.Texture2D,
+	grass_shader:                raylib.Shader,
+	grass_time_loc:              c.int,
+	grass_shader_valid:          bool,
+	npc_glow_shader:             raylib.Shader,
+	npc_glow_time_loc:           c.int,
+	npc_glow_body_progress_loc:  c.int,
+	npc_glow_flicker_offset_loc: c.int,
+	npc_glow_tint_offset_loc:    c.int,
+	npc_glow_shader_valid:       bool,
 }
 
 Sounds :: struct {
@@ -154,8 +154,14 @@ load_sprites :: proc() -> Sprites {
 		s.grass_shader_valid = raylib.IsShaderValid(s.grass_shader)
 		s.npc_glow_shader = raylib.LoadShader(nil, "assets/shaders/npc_glow.frag")
 		s.npc_glow_time_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_time")
-		s.npc_glow_body_progress_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_body_progress")
-		s.npc_glow_flicker_offset_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_flicker_offset")
+		s.npc_glow_body_progress_loc = raylib.GetShaderLocation(
+			s.npc_glow_shader,
+			"u_body_progress",
+		)
+		s.npc_glow_flicker_offset_loc = raylib.GetShaderLocation(
+			s.npc_glow_shader,
+			"u_flicker_offset",
+		)
 		s.npc_glow_tint_offset_loc = raylib.GetShaderLocation(s.npc_glow_shader, "u_tint_offset")
 		s.npc_glow_shader_valid = raylib.IsShaderValid(s.npc_glow_shader)
 	}

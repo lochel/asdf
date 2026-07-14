@@ -17,7 +17,7 @@ main :: proc() {
 
 	preload := Preload_Context {
 		scene = {
-			init   = preload_init,
+			init = preload_init,
 			deinit = preload_deinit,
 			update = preload_update,
 			render = preload_render,
@@ -26,20 +26,20 @@ main :: proc() {
 
 	menu := Menu_Context {
 		scene = {
-			enter  = menu_enter,
-			leave  = menu_leave,
-			input  = menu_input,
-			step   = menu_step,
+			enter = menu_enter,
+			leave = menu_leave,
+			input = menu_input,
+			step = menu_step,
 			render = menu_render,
 		},
 	}
 
 	game := Game_Context {
 		scene = {
-			enter  = game_enter,
-			leave  = game_leave,
-			input  = game_input,
-			step   = game_step,
+			enter = game_enter,
+			leave = game_leave,
+			input = game_input,
+			step = game_step,
 			update = game_update,
 			render = game_render,
 		},

@@ -1,7 +1,7 @@
 package main
 
-import "core:sys/posix"
 import "core:strings"
+import "core:sys/posix"
 
 @(private)
 joy_fd: posix.FD = -1

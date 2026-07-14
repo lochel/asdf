@@ -13,27 +13,27 @@ Actor :: struct {
 
 TilemapActor :: struct {
 	using actor: Actor,
-	tilemap:    ^Tilemap,
-	assets:     ^Assets,
-	remaining:  int,
+	tilemap:     ^Tilemap,
+	assets:      ^Assets,
+	remaining:   int,
 }
 
 SnakeActor :: struct {
 	using actor: Actor,
-	snake:      ^Snake,
-	assets:     ^Assets,
+	snake:       ^Snake,
+	assets:      ^Assets,
 }
 
 NpcSnakeCollectionActor :: struct {
 	using actor: Actor,
-	snakes:     ^[dynamic]NpcSnake,
-	assets:     ^Assets,
+	snakes:      ^[dynamic]NpcSnake,
+	assets:      ^Assets,
 }
 
 FoodActor :: struct {
 	using actor: Actor,
-	food:       ^Food,
-	assets:     ^Assets,
+	food:        ^Food,
+	assets:      ^Assets,
 }
 
 tilemap_actor_render :: proc(self: ^Actor) {
