@@ -3,34 +3,33 @@ package main
 import "engine"
 
 import "core:c"
-import "core:math"
 import "core:math/rand"
 
 import rl "vendor:raylib"
 
 FloatingLabel :: struct {
 	using actor: Actor,
-	pos:   Vec2,
-	timer: f32,
-	life:  f32,
-	text:  cstring,
+	pos:         Vec2,
+	timer:       f32,
+	life:        f32,
+	text:        cstring,
 }
 
 Game_Context :: struct {
-	using scene:      engine.Scene_Context,
-	playing:          Playing,
-	snake:            Snake,
-	food:             Food,
-	tilemap:          Tilemap,
-	tilemap_loaded:   bool,
-	game_over:        bool,
-	final_score:      int,
-	prev_level:       int,
-	entered:          bool,
-	labels:           [dynamic]FloatingLabel,
-	tilemap_actor:    TilemapActor,
-	snake_actor:      SnakeActor,
-	npc_actor:        NpcSnakeCollectionActor,
+	using scene:    engine.Scene_Context,
+	playing:        Playing,
+	snake:          Snake,
+	food:           Food,
+	tilemap:        Tilemap,
+	tilemap_loaded: bool,
+	game_over:      bool,
+	final_score:    int,
+	prev_level:     int,
+	entered:        bool,
+	labels:         [dynamic]FloatingLabel,
+	tilemap_actor:  TilemapActor,
+	snake_actor:    SnakeActor,
+	npc_actor:      NpcSnakeCollectionActor,
 }
 
 game_init :: proc(ctx: ^engine.Scene_Context) {
@@ -109,19 +108,19 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd.prev_level = 0
 	clear(&gd.labels)
 
-	gd.tilemap_actor = TilemapActor{
-		actor    = {scene = &gd.scene, render = tilemap_actor_render},
-		tilemap  = &gd.tilemap,
-		assets   = &assets_global,
+	gd.tilemap_actor = TilemapActor {
+		actor = {scene = &gd.scene, render = tilemap_actor_render},
+		tilemap = &gd.tilemap,
+		assets = &assets_global,
 		remaining = 0,
 	}
-	gd.snake_actor = SnakeActor{
-		actor  = {scene = &gd.scene, render = snake_actor_render},
-		snake  = &gd.snake,
+	gd.snake_actor = SnakeActor {
+		actor = {scene = &gd.scene, render = snake_actor_render},
+		snake = &gd.snake,
 		assets = &assets_global,
 	}
-	gd.npc_actor = NpcSnakeCollectionActor{
-		actor  = {scene = &gd.scene, render = npc_snake_collection_render},
+	gd.npc_actor = NpcSnakeCollectionActor {
+		actor = {scene = &gd.scene, render = npc_snake_collection_render},
 		snakes = &gd.playing.npc_snakes,
 		assets = &assets_global,
 	}
@@ -199,7 +198,15 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	}
 
 	for pl in playing.pending_labels {
-		append(&gd.labels, FloatingLabel{actor = {scene = &gd.scene, render = label_render}, pos = pl.pos, life = 0.8, text = pl.text})
+		append(
+			&gd.labels,
+			FloatingLabel {
+				actor = {scene = &gd.scene, render = label_render},
+				pos = pl.pos,
+				life = 0.8,
+				text = pl.text,
+			},
+		)
 	}
 	clear(&playing.pending_labels)
 
@@ -615,7 +622,13 @@ update :: proc(
 			if dead[i] {
 				playing.npc_kills += 1
 				playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
-				append(&playing.pending_labels, PendingLabel{pos = playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1], text = "+10"})
+				append(
+					&playing.pending_labels,
+					PendingLabel {
+						pos = playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1],
+						text = "+10",
+					},
+				)
 				delete(playing.npc_snakes[i].body)
 				delete(playing.npc_snakes[i].head_dirs)
 				delete(playing.npc_snakes[i].debug_path)
