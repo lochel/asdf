@@ -127,6 +127,18 @@ run :: proc(e: ^Engine_Context, first: string) {
 				fmt.println("death spiral prevented")
 			}
 		}
+		if e.trans.active && e.next != nil && e.next.step != nil {
+			e.next.step_acc -= dt
+			max_iter := 5
+			for max_iter > 0 && e.next.step_acc <= 0 {
+				max_iter -= 1
+				e.next.step_acc += e.next.step(e.next, e.next.step_count)
+				e.next.step_count += 1
+			}
+			if max_iter <= 0 {
+				fmt.println("death spiral prevented")
+			}
+		}
 
 		if e.current != nil && e.current.update != nil {
 			e.current.update(e.current, dt)
