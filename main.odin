@@ -25,7 +25,6 @@ main :: proc() {
 
 	menu := Menu_Context {
 		scene = {
-			init = menu_init,
 			deinit = menu_deinit,
 			enter = menu_enter,
 			leave = menu_leave,
