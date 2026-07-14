@@ -33,4 +33,5 @@ Playing :: struct {
 	paused:           bool,
 	pending_labels:   [dynamic]PendingLabel,
 	level_stats:      [dynamic]LevelStats,
+	level_just_completed: bool,
 }
