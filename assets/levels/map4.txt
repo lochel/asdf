@@ -1,4 +1,4 @@
-{"label":"4. Chaos","gate_score":12,"split_scores":[7,10,11]}
+{"label":"4. Small Rooms","gate_score":12,"split_scores":[7,10,11]}
 
 xxxxxxxxxxxxxxxxxxxx
 x........x.........x
