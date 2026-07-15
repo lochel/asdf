@@ -1644,12 +1644,12 @@ draw_level_complete :: proc(
 	screen_width: i32,
 	screen_height: i32,
 ) {
-	fsize1: c.int = CELL_SIZE * 3
-	fsize2: c.int = CELL_SIZE * 2
+	fsize1: c.int = CELL_SIZE * 2
+	fsize2: c.int = CELL_SIZE * 1
 	fsize3: c.int = CELL_SIZE
-	fsize4: c.int = CELL_SIZE / 2 + 4
+	fsize4: c.int = CELL_SIZE / 1 + 4
 
-	cy: c.int = screen_height / 2 - fsize1
+	cy: c.int = screen_height / 3
 
 	// LEVEL COMPLETE!
 	t1: cstring = "LEVEL COMPLETE!"
