@@ -51,6 +51,13 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 		unload_tilemap(&gd.tilemap)
 		gd.tilemap_loaded = false
 	}
+	if len(LEVELS) == 0 {
+		gd.game_over = true
+		gd.victory = false
+		gd.level_complete = false
+		gd.final_score = 0
+		return
+	}
 
 	gd.tilemap = load_tilemap(LEVELS[0].file)
 	gd.tilemap_loaded = true
@@ -195,6 +202,11 @@ game_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 
 game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	gd := cast(^Game_Context)ctx
+	if len(LEVELS) == 0 {
+		gd.game_over = true
+		gd.final_score = 0
+		return move_delay
+	}
 
 	if gd.game_over || gd.victory || gd.level_complete || gd.playing.paused {
 		return move_delay
@@ -1462,8 +1474,11 @@ draw_foul_food :: proc(pos: Vec2, assets: Assets) {
 }
 
 draw_hud :: proc(playing: Playing, screen_width: i32) {
-	level_idx := min(playing.current_level, len(LEVELS) - 1)
-	level := LEVELS[level_idx]
+	level := LevelDef{gate_score = 0}
+	if len(LEVELS) > 0 {
+		level_idx := clamp(playing.current_level, 0, len(LEVELS) - 1)
+		level = LEVELS[level_idx]
+	}
 
 	rl.DrawRectangle(0, 0, screen_width, HUD_HEIGHT, rl.Color{42, 112, 20, 255})
 	rl.DrawLine(0, HUD_HEIGHT - 1, screen_width, HUD_HEIGHT - 1, rl.Color{30, 80, 14, 255})

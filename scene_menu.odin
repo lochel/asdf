@@ -60,6 +60,16 @@ menu_enter :: proc(ctx: ^engine.Scene_Context) {
 		unload_tilemap(&mc.tilemap)
 		mc.tilemap_loaded = false
 	}
+	if len(LEVELS) == 0 {
+		for npc in mc.demo_npcs {
+			delete(npc.body)
+			delete(npc.head_dirs)
+			delete(npc.debug_path)
+		}
+		clear(&mc.demo_npcs)
+		mc.demo_food = {-1, -1}
+		return
+	}
 
 	mc.tilemap = load_tilemap(LEVELS[0].file)
 	mc.tilemap_loaded = true
@@ -171,6 +181,20 @@ menu_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 
 menu_render :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
+	if len(LEVELS) == 0 {
+		sw := mc.eng.config.width
+		sh := mc.eng.config.height
+		rl.ClearBackground(rl.Color{20, 20, 30, 255})
+		t1: cstring = "No levels found"
+		t2: cstring = "Add .txt maps under assets/levels"
+		fs1: c.int = CELL_SIZE
+		fs2: c.int = CELL_SIZE / 2 + 4
+		w1 := rl.MeasureText(t1, fs1)
+		w2 := rl.MeasureText(t2, fs2)
+		rl.DrawText(t1, (sw - w1) / 2, sh / 2 - fs1, fs1, rl.RAYWHITE)
+		rl.DrawText(t2, (sw - w2) / 2, sh / 2 + 8, fs2, rl.GRAY)
+		return
+	}
 
 	camera := rl.Camera2D {
 		offset   = {0, f32(HUD_HEIGHT)},

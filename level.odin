@@ -134,19 +134,21 @@ load_tilemap :: proc(path: string) -> Tilemap {
 		}
 	}
 
-	line_buf: [20]string
-	line_count := 0
+	map_lines: [dynamic]string
+	defer delete(map_lines)
 	width := 0
 	for i in map_start ..< len(lines) {
 		line := strings.trim_right(lines[i], "\r\n")
 		if len(line) == 0 do continue
-		line_buf[line_count] = line
+		append(&map_lines, line)
 		if len(line) > width {
 			width = len(line)
 		}
-		line_count += 1
 	}
-	height := line_count
+	height := len(map_lines)
+	if height == 0 {
+		panic("Invalid map: no map rows found")
+	}
 
 	tiles := make([][]TileType, height)
 	for y in 0 ..< height {
@@ -166,7 +168,7 @@ load_tilemap :: proc(path: string) -> Tilemap {
 	has_start := false
 
 	for y in 0 ..< height {
-		line := line_buf[y]
+		line := map_lines[y]
 		for x in 0 ..< min(len(line), width) {
 			ch := line[x]
 			if ch == '#' {

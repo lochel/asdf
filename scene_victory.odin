@@ -24,6 +24,7 @@ Victory_Context :: struct {
 	using scene:     engine.Scene_Context,
 	total_score:     int,
 	level_stats:     [dynamic]LevelStats,
+	level_labels_c:  [dynamic]cstring,
 	elapsed:         f32,
 	confetti:        [CONFETTI_COUNT]Confetti_Particle,
 }
@@ -58,6 +59,10 @@ victory_enter :: proc(ctx: ^engine.Scene_Context) {
 	vc.total_score = victory_score
 	vc.level_stats = victory_stats
 	victory_stats = nil
+	clear(&vc.level_labels_c)
+	for ls in vc.level_stats {
+		append(&vc.level_labels_c, strings.clone_to_cstring(ls.label))
+	}
 	vc.elapsed = 0
 
 	engine.resize(vc.eng, 800, 600)
@@ -73,6 +78,11 @@ victory_leave :: proc(ctx: ^engine.Scene_Context) {
 	vc := cast(^Victory_Context)ctx
 	delete(vc.level_stats)
 	vc.level_stats = nil
+	for label in vc.level_labels_c {
+		delete(label)
+	}
+	delete(vc.level_labels_c)
+	vc.level_labels_c = nil
 }
 
 victory_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
@@ -177,7 +187,11 @@ victory_render :: proc(ctx: ^engine.Scene_Context) {
 			rl.DrawRectangle(30, cy - 2, sw - 60, row_h, rl.Color{25, 35, 25, 120})
 		}
 
-		rl.DrawText(strings.clone_to_cstring(ls.label), col_x[0], cy, fs_val, rl.RAYWHITE)
+		label := cstring("")
+		if idx < len(vc.level_labels_c) {
+			label = vc.level_labels_c[idx]
+		}
+		rl.DrawText(label, col_x[0], cy, fs_val, rl.RAYWHITE)
 		rl.DrawText(rl.TextFormat("%d", ls.apples), col_x[1], cy, fs_val, rl.RAYWHITE)
 		rl.DrawText(rl.TextFormat("%d", ls.foul_kills), col_x[2], cy, fs_val, rl.RAYWHITE)
 		rl.DrawText(rl.TextFormat("%d", ls.npc_kills), col_x[3], cy, fs_val, rl.RAYWHITE)
