@@ -235,15 +235,16 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 		playing.countdown -= dt
 	}
 	npcs_only := playing.countdown > 0
-	if update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, npcs_only) {
+	player_died_now := update(&gd.snake, &gd.food, playing, &assets_global, &gd.tilemap, npcs_only)
+	if playing.gate_loss_this_step {
+		drop_pending_plus10(playing)
+		drop_visible_plus10(&gd.labels)
+	}
+	if player_died_now {
 		if playing.current_level >= len(LEVELS) {
 			gd.victory = true
 		} else {
 			gd.game_over = true
-		}
-		if playing.gate_loss_this_step {
-			drop_pending_plus10(playing)
-			drop_visible_plus10(&gd.labels)
 		}
 		gd.final_score = playing.total_score + playing.score
 	} else if playing.level_just_completed {
