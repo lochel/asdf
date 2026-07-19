@@ -893,7 +893,7 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets
 	npc := NpcSnake {
 		body      = npc_body,
 		head_dirs = npc_dirs,
-		direction = npc_dirs[len(npc_dirs) - 1],
+		direction = npc_dirs[max(0, len(npc_dirs) - 2)],
 		stun      = 3,
 		tint      = npc_tint(len(playing.npc_snakes)),
 	}
@@ -1418,7 +1418,7 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 
 		if i == head_idx {
 			rl.DrawTexture(
-				assets.sprites.head[npc.head_dirs[head_idx]],
+				assets.sprites.head[npc.direction],
 				c.int(pos.x * CELL_SIZE),
 				c.int(pos.y * CELL_SIZE),
 				tint,
