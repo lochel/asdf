@@ -1,7 +1,6 @@
 package main
 
 import "core:c"
-import "core:math/rand"
 import "engine"
 import rl "vendor:raylib"
 
@@ -19,43 +18,6 @@ Menu_Context :: struct {
 	food_actor:     FoodActor,
 }
 
-spawn_demo_npc :: proc(m: ^Menu_Context) {
-	npc_dirs := [3]Direction{.Right, .Left, .Down}
-	npc_offsets := [3]Vec2{{-1, 0}, {1, 0}, {0, -1}}
-	idx := len(m.demo_npcs) % 3
-	pos: Vec2
-	found := false
-	for attempt := 0; attempt < 50; attempt += 1 {
-		p := Vec2{rand.int_max(GRID_WIDTH), rand.int_max(GRID_HEIGHT)}
-		if is_grass(m.tilemap, p) && p != m.tilemap.start_pos {
-			pos = p
-			found = true
-			break
-		}
-	}
-	if !found {
-		pos = Vec2{5 + idx * 5, 5 + idx * 3}
-	}
-
-	npc_body := make([dynamic]Vec2)
-	npc_dirs_arr := make([dynamic]Direction)
-	append(&npc_body, pos)
-	append(&npc_body, pos + npc_offsets[idx])
-	append(&npc_body, pos + npc_offsets[idx] * 2)
-	append(&npc_dirs_arr, npc_dirs[idx])
-	append(&npc_dirs_arr, npc_dirs[idx])
-	append(&npc_dirs_arr, npc_dirs[idx])
-	append(
-		&m.demo_npcs,
-		NpcSnake {
-			body = npc_body,
-			head_dirs = npc_dirs_arr,
-			direction = npc_dirs[idx],
-			tint = npc_tint(idx),
-		},
-	)
-}
-
 menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 	mc.option_focus = 0
@@ -67,12 +29,7 @@ menu_enter :: proc(ctx: ^engine.Scene_Context) {
 		mc.tilemap_loaded = false
 	}
 	if len(LEVELS) == 0 {
-		for npc in mc.demo_npcs {
-			delete(npc.body)
-			delete(npc.head_dirs)
-			delete(npc.debug_path)
-		}
-		clear(&mc.demo_npcs)
+		clear_npc_snakes(&mc.demo_npcs)
 		mc.demo_food = {-1, -1}
 		return
 	}
@@ -116,13 +73,7 @@ menu_enter :: proc(ctx: ^engine.Scene_Context) {
 menu_leave :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
 
-	for npc in mc.demo_npcs {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	delete(mc.demo_npcs)
-	mc.demo_npcs = nil
+	delete_npc_snakes(&mc.demo_npcs)
 
 	delete(snake_global.body)
 	delete(snake_global.head_dirs)
@@ -223,9 +174,7 @@ menu_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 			mc.tilemap,
 		)
 		if !alive {
-			delete(mc.demo_npcs[i].body)
-			delete(mc.demo_npcs[i].head_dirs)
-			delete(mc.demo_npcs[i].debug_path)
+			free_npc_parts(&mc.demo_npcs[i])
 			unordered_remove(&mc.demo_npcs, i)
 			spawn_demo_npc(mc)
 			continue

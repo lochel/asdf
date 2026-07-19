@@ -34,18 +34,36 @@ Game_Context :: struct {
 	npc_actor:      NpcSnakeCollectionActor,
 }
 
+hydrate_pending_labels :: proc(gd: ^Game_Context) {
+	for pl in gd.playing.pending_labels {
+		append(
+			&gd.labels,
+			FloatingLabel {
+				actor = {scene = &gd.scene, render = label_render},
+				pos = pl.pos,
+				life = 0.8,
+				text = pl.text,
+			},
+		)
+	}
+	clear(&gd.playing.pending_labels)
+}
+
+draw_state_backdrop :: proc(gd: ^Game_Context, camera: rl.Camera2D) {
+	draw_hud(gd.playing, gd.eng.config.width)
+	if gd.tilemap_loaded {
+		rl.BeginMode2D(camera)
+		gd.tilemap_actor.remaining = 0
+		gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
+		rl.EndMode2D()
+	} else {
+		rl.ClearBackground(rl.Color{20, 20, 30, 255})
+	}
+}
 game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd := cast(^Game_Context)ctx
 
-	for npc in gd.playing.npc_snakes {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	delete(gd.playing.npc_snakes)
-	delete(gd.playing.foul_foods)
-	delete(gd.playing.splits_triggered)
-	delete(gd.playing.pending_labels)
+	release_playing_runtime(&gd.playing)
 
 	if gd.tilemap_loaded {
 		unload_tilemap(&gd.tilemap)
@@ -114,21 +132,7 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 game_leave :: proc(ctx: ^engine.Scene_Context) {
 	gd := cast(^Game_Context)ctx
 
-	for npc in gd.playing.npc_snakes {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	delete(gd.playing.npc_snakes)
-	gd.playing.npc_snakes = nil
-	delete(gd.playing.foul_foods)
-	gd.playing.foul_foods = nil
-	delete(gd.playing.splits_triggered)
-	gd.playing.splits_triggered = {}
-	delete(gd.playing.pending_labels)
-	gd.playing.pending_labels = nil
-	delete(gd.playing.level_stats)
-	gd.playing.level_stats = nil
+	release_playing_runtime(&gd.playing, true)
 
 	delete(gd.snake.body)
 	delete(gd.snake.head_dirs)
@@ -238,16 +242,8 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 			gd.game_over = true
 		}
 		if playing.gate_loss_this_step {
-			for i := len(playing.pending_labels) - 1; i >= 0; i -= 1 {
-				if playing.pending_labels[i].text == "+10" {
-					unordered_remove(&playing.pending_labels, i)
-				}
-			}
-			for i := len(gd.labels) - 1; i >= 0; i -= 1 {
-				if gd.labels[i].text == "+10" {
-					unordered_remove(&gd.labels, i)
-				}
-			}
+			drop_pending_plus10(playing)
+			drop_visible_plus10(&gd.labels)
 		}
 		gd.final_score = playing.total_score + playing.score
 	} else if playing.level_just_completed {
@@ -259,18 +255,7 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 		gd.prev_level = playing.current_level
 	}
 
-	for pl in playing.pending_labels {
-		append(
-			&gd.labels,
-			FloatingLabel {
-				actor = {scene = &gd.scene, render = label_render},
-				pos = pl.pos,
-				life = 0.8,
-				text = pl.text,
-			},
-		)
-	}
-	clear(&playing.pending_labels)
+	hydrate_pending_labels(gd)
 
 	return move_delay
 }
@@ -297,43 +282,19 @@ game_render :: proc(ctx: ^engine.Scene_Context) {
 	}
 
 	if gd.game_over {
-		draw_hud(gd.playing, gd.eng.config.width)
-		if gd.tilemap_loaded {
-			rl.BeginMode2D(camera)
-			gd.tilemap_actor.remaining = 0
-			gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
-			rl.EndMode2D()
-		} else {
-			rl.ClearBackground(rl.Color{20, 20, 30, 255})
-		}
+		draw_state_backdrop(gd, camera)
 		draw_game_over(gd.final_score, gd.playing, gd.eng.config.width, gd.eng.config.height)
 		return
 	}
 
 	if gd.victory {
-		draw_hud(gd.playing, gd.eng.config.width)
-		if gd.tilemap_loaded {
-			rl.BeginMode2D(camera)
-			gd.tilemap_actor.remaining = 0
-			gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
-			rl.EndMode2D()
-		} else {
-			rl.ClearBackground(rl.Color{20, 20, 30, 255})
-		}
+		draw_state_backdrop(gd, camera)
 		draw_victory(gd.final_score, gd.eng.config.width, gd.eng.config.height)
 		return
 	}
 
 	if gd.level_complete {
-		draw_hud(gd.playing, gd.eng.config.width)
-		if gd.tilemap_loaded {
-			rl.BeginMode2D(camera)
-			gd.tilemap_actor.remaining = 0
-			gd.tilemap_actor.actor.render(&gd.tilemap_actor.actor)
-			rl.EndMode2D()
-		} else {
-			rl.ClearBackground(rl.Color{20, 20, 30, 255})
-		}
+		draw_state_backdrop(gd, camera)
 		draw_level_complete(gd.completed_level_score, gd.playing, gd.eng.config.width, gd.eng.config.height)
 		return
 	}
@@ -563,8 +524,8 @@ update :: proc(
 
 		if new_head == food^ {
 			playing.apples += 1
-			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
-			append(&playing.pending_labels, PendingLabel{pos = new_head, text = "+1"})
+			recompute_score(playing)
+			add_pending_label(playing, new_head, "+1")
 			rl.PlaySound(assets^.sounds.eat)
 
 			if !playing.gate_open {
@@ -624,16 +585,10 @@ update :: proc(
 			if !alive {
 				if !died_from_foul {
 					playing.npc_kills += 1
-					playing.score =
-						playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
-					append(
-						&playing.pending_labels,
-						PendingLabel {pos = npc_head_before, text = "+10"},
-					)
+					recompute_score(playing)
+					add_pending_label(playing, npc_head_before, "+10")
 				}
-				delete(playing.npc_snakes[i].body)
-				delete(playing.npc_snakes[i].head_dirs)
-				delete(playing.npc_snakes[i].debug_path)
+				free_npc_parts(&playing.npc_snakes[i])
 				unordered_remove(&playing.npc_snakes, i)
 				continue
 			}
@@ -664,9 +619,7 @@ update :: proc(
 			npc_dies := false
 			for seg in snake.body {
 				if npc_head == seg {
-					delete(playing.npc_snakes[i].body)
-					delete(playing.npc_snakes[i].head_dirs)
-					delete(playing.npc_snakes[i].debug_path)
+					free_npc_parts(&playing.npc_snakes[i])
 					unordered_remove(&playing.npc_snakes, i)
 					npc_dies = true
 					break
@@ -678,9 +631,7 @@ update :: proc(
 			if !npcs_only {
 				for seg in playing.npc_snakes[i].body {
 					if player_head == seg {
-						delete(playing.npc_snakes[i].body)
-						delete(playing.npc_snakes[i].head_dirs)
-						delete(playing.npc_snakes[i].debug_path)
+						free_npc_parts(&playing.npc_snakes[i])
 						unordered_remove(&playing.npc_snakes, i)
 						npc_dies = true
 						break
@@ -723,17 +674,13 @@ update :: proc(
 		for i := len(playing.npc_snakes) - 1; i >= 0; i -= 1 {
 			if dead[i] {
 				playing.npc_kills += 1
-				playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
-				append(
-					&playing.pending_labels,
-					PendingLabel {
-						pos = playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1],
-						text = "+10",
-					},
+				recompute_score(playing)
+				add_pending_label(
+					playing,
+					playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1],
+					"+10",
 				)
-				delete(playing.npc_snakes[i].body)
-				delete(playing.npc_snakes[i].head_dirs)
-				delete(playing.npc_snakes[i].debug_path)
+				free_npc_parts(&playing.npc_snakes[i])
 				unordered_remove(&playing.npc_snakes, i)
 			}
 		}
@@ -753,19 +700,7 @@ player_died :: proc(
 	playing.lives -= 1
 
 	if playing.lives <= 0 {
-		for npc in playing.npc_snakes {
-			delete(npc.body)
-			delete(npc.head_dirs)
-			delete(npc.debug_path)
-		}
-		delete(playing.npc_snakes)
-		playing.npc_snakes = nil
-		delete(playing.foul_foods)
-		playing.foul_foods = nil
-		delete(playing.splits_triggered)
-		playing.splits_triggered = {}
-		delete(playing.pending_labels)
-		playing.pending_labels = nil
+		release_playing_runtime(playing)
 		return true
 	}
 
@@ -817,19 +752,7 @@ advance_level :: proc(
 	)
 
 	if start_single_level_mode {
-		for npc in playing.npc_snakes {
-			delete(npc.body)
-			delete(npc.head_dirs)
-			delete(npc.debug_path)
-		}
-		delete(playing.npc_snakes)
-		playing.npc_snakes = nil
-		delete(playing.foul_foods)
-		playing.foul_foods = nil
-		delete(playing.splits_triggered)
-		playing.splits_triggered = {}
-		delete(playing.pending_labels)
-		playing.pending_labels = nil
+		release_playing_runtime(playing)
 		playing.current_level = len(LEVELS)
 		playing.total_score += playing.score
 		return true
@@ -838,19 +761,7 @@ advance_level :: proc(
 	playing.current_level += 1
 
 	if playing.current_level >= len(LEVELS) {
-		for npc in playing.npc_snakes {
-			delete(npc.body)
-			delete(npc.head_dirs)
-			delete(npc.debug_path)
-		}
-		delete(playing.npc_snakes)
-		playing.npc_snakes = nil
-		delete(playing.foul_foods)
-		playing.foul_foods = nil
-		delete(playing.splits_triggered)
-		playing.splits_triggered = {}
-		delete(playing.pending_labels)
-		playing.pending_labels = nil
+		release_playing_runtime(playing)
 		return true
 	}
 
@@ -883,12 +794,7 @@ load_next_level :: proc(
 	snake.next_direction = .Right
 	food^ = {-1, -1}
 
-	for npc in playing.npc_snakes {
-		delete(npc.body)
-		delete(npc.head_dirs)
-		delete(npc.debug_path)
-	}
-	clear(&playing.npc_snakes)
+	clear_npc_snakes(&playing.npc_snakes)
 
 	playing.apples = 0
 	playing.foul_kills = 0
