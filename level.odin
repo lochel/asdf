@@ -176,6 +176,10 @@ load_tilemap :: proc(path: string) -> Tilemap {
 				gate_pos = Vec2{x, y}
 				has_gate = true
 			} else if ch == 'S' {
+				if has_start {
+					tiles[y][x] = .Grass
+					continue
+				}
 				tiles[y][x] = .Start
 				start_pos = Vec2{x, y}
 				has_start = true
@@ -203,6 +207,19 @@ load_tilemap :: proc(path: string) -> Tilemap {
 		}
 		for j := 0; j < count; j += 2 {
 			append(&pairs, PuddlePair{positions[i][j], positions[i][j + 1]})
+		}
+	}
+
+	// Normalize any stray Start tiles so only the selected start position renders.
+	for y in 0 ..< height {
+		for x in 0 ..< width {
+			if tiles[y][x] != .Start {
+				continue
+			}
+			pos := Vec2{x, y}
+			if !has_start || pos != start_pos {
+				tiles[y][x] = .Grass
+			}
 		}
 	}
 
@@ -265,7 +282,7 @@ puddle_tint :: proc(pair_idx: int) -> raylib.Color {
 		{100, 180, 255, 255},
 		{255, 120, 120, 255},
 		{120, 255, 120, 255},
-		{255, 255, 100, 255},
+		{120, 220, 255, 255},
 		{200, 140, 255, 255},
 		{100, 255, 255, 255},
 		{255, 180, 80, 255},
@@ -377,20 +394,29 @@ draw_tilemap :: proc(tm: Tilemap, assets: Assets, remaining: int) {
 					)
 				}
 			case .Start:
-				raylib.DrawRectangle(
-					c.int(x * CELL_SIZE),
-					c.int(y * CELL_SIZE),
-					CELL_SIZE,
-					CELL_SIZE,
-					raylib.Color{180, 180, 60, 255},
-				)
-				raylib.DrawRectangleLines(
-					c.int(x * CELL_SIZE),
-					c.int(y * CELL_SIZE),
-					CELL_SIZE,
-					CELL_SIZE,
-					raylib.Color{255, 255, 120, 255},
-				)
+				if tm.has_start && pos == tm.start_pos {
+					raylib.DrawRectangle(
+						c.int(x * CELL_SIZE),
+						c.int(y * CELL_SIZE),
+						CELL_SIZE,
+						CELL_SIZE,
+						raylib.Color{180, 180, 60, 255},
+					)
+					raylib.DrawRectangleLines(
+						c.int(x * CELL_SIZE),
+						c.int(y * CELL_SIZE),
+						CELL_SIZE,
+						CELL_SIZE,
+						raylib.Color{255, 255, 120, 255},
+					)
+				} else {
+					raylib.DrawTexture(
+						assets.sprites.grass,
+						c.int(x * CELL_SIZE),
+						c.int(y * CELL_SIZE),
+						raylib.WHITE,
+					)
+				}
 			}
 		}
 	}
