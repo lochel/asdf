@@ -144,7 +144,7 @@ menu_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 	}
 	for i := len(mc.demo_npcs) - 1; i >= 0; i -= 1 {
 		food_pos := mc.demo_food
-		alive, ate := move_npc(
+		alive, ate, _ := move_npc(
 			&mc.demo_npcs[i],
 			food_pos,
 			&snake_global,

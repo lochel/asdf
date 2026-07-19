@@ -583,7 +583,8 @@ update :: proc(
 		i := 0
 		for i < len(playing.npc_snakes) {
 			player_head := snake.body[len(snake.body) - 1]
-			alive, ate := move_npc(
+			npc_head_before := playing.npc_snakes[i].body[len(playing.npc_snakes[i].body) - 1]
+			alive, ate, died_from_foul := move_npc(
 				&playing.npc_snakes[i],
 				food^,
 				snake,
@@ -592,6 +593,15 @@ update :: proc(
 				tm^,
 			)
 			if !alive {
+				if !died_from_foul {
+					playing.npc_kills += 1
+					playing.score =
+						playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
+					append(
+						&playing.pending_labels,
+						PendingLabel {pos = npc_head_before, text = "+10"},
+					)
+				}
 				delete(playing.npc_snakes[i].body)
 				delete(playing.npc_snakes[i].head_dirs)
 				delete(playing.npc_snakes[i].debug_path)
@@ -618,10 +628,6 @@ update :: proc(
 			npc_dies := false
 			for seg in snake.body {
 				if npc_head == seg {
-					playing.npc_kills += 1
-					playing.score =
-						playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
-					append(&playing.pending_labels, PendingLabel{pos = npc_head, text = "+10"})
 					delete(playing.npc_snakes[i].body)
 					delete(playing.npc_snakes[i].head_dirs)
 					delete(playing.npc_snakes[i].debug_path)
@@ -636,9 +642,6 @@ update :: proc(
 			if !npcs_only {
 				for seg in playing.npc_snakes[i].body {
 					if player_head == seg {
-						playing.npc_kills += 1
-						playing.score =
-							playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 						delete(playing.npc_snakes[i].body)
 						delete(playing.npc_snakes[i].head_dirs)
 						delete(playing.npc_snakes[i].debug_path)
@@ -650,7 +653,6 @@ update :: proc(
 			}
 			if npc_dies {
 				player_died(snake, food, playing, assets, tm)
-				append(&playing.pending_labels, PendingLabel{pos = npc_head, text = "+10"})
 				return playing.lives <= 0
 			}
 
@@ -901,7 +903,7 @@ perform_split :: proc(snake: ^Snake, playing: ^Playing, split_score: int, assets
 check_split :: proc(snake: ^Snake, playing: ^Playing, assets: ^Assets) {
 	level := LEVELS[playing.current_level]
 	for split_score in level.split_scores {
-		if playing.score >= split_score && !playing.splits_triggered[split_score] {
+		if playing.apples >= split_score && !playing.splits_triggered[split_score] {
 			perform_split(snake, playing, split_score, assets)
 			break
 		}
@@ -1036,10 +1038,11 @@ move_npc :: proc(
 ) -> (
 	bool,
 	bool,
+	bool,
 ) {
 	if npc.stun > 0 {
 		npc.stun -= 1
-		return true, false
+		return true, false, false
 	}
 
 	head := npc.body[len(npc.body) - 1]
@@ -1246,7 +1249,7 @@ move_npc :: proc(
 		}
 
 		if best_score == -999 {
-			return false, false
+			return false, false, false
 		}
 	}
 
@@ -1288,7 +1291,7 @@ move_npc :: proc(
 			playing.foul_kills += 1
 			playing.score = playing.apples + playing.foul_kills * 5 + playing.npc_kills * 10
 			append(&playing.pending_labels, PendingLabel{pos = new_head, text = "+5"})
-			return false, false
+			return false, false, true
 		}
 	}
 
@@ -1304,7 +1307,7 @@ move_npc :: proc(
 		pop(&npc.head_dirs)
 	}
 
-	return true, ate
+	return true, ate, false
 }
 
 body_texture :: proc(s: Sprites, dir_in, dir_out: Vec2) -> rl.Texture2D {
