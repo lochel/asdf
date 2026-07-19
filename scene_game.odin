@@ -419,9 +419,6 @@ init_game :: proc(snake: ^Snake, food: ^Food, tm: ^Tilemap) {
 	clear(&snake.body)
 	clear(&snake.head_dirs)
 	s := tm.start_pos
-	if !tm.has_start {
-		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-	}
 	append(&snake.body, s)
 	append(&snake.head_dirs, Direction.Right)
 	snake.direction = .Right
@@ -475,9 +472,6 @@ update :: proc(
 	// Delayed spawning: wait until no NPC is within 3 tiles of start
 	if playing.spawning_delayed && playing.spawning == 0 && !npcs_only {
 		start := tm.start_pos
-		if !tm.has_start {
-			start = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-		}
 		can_spawn := true
 		for npc in playing.npc_snakes {
 			for seg in npc.body {
@@ -754,9 +748,6 @@ player_died :: proc(
 	clear(&snake.body)
 	clear(&snake.head_dirs)
 	s := tm.start_pos
-	if !tm.has_start {
-		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-	}
 	append(&snake.body, s)
 	append(&snake.head_dirs, Direction.Right)
 	snake.direction = .Right
@@ -853,9 +844,6 @@ load_next_level :: proc(
 	tm^ = load_tilemap(LEVELS[playing.current_level].file)
 
 	s := tm.start_pos
-	if !tm.has_start {
-		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-	}
 
 	preserved_len := len(snake.body)
 	clear(&snake.body)

@@ -32,7 +32,7 @@ preload_deinit :: proc(ctx: ^engine.Scene_Context) {
 
 preload_update :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 	_ = dt
-	engine.switch_scene(ctx.eng, engine.getScene(ctx.eng, "menu"), .Fade, 1.5)
+	engine.switch_scene(ctx.eng, engine.getScene(ctx.eng, "menu"), .Fade, 0.5)
 }
 
 preload_render :: proc(ctx: ^engine.Scene_Context) {

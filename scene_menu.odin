@@ -84,9 +84,6 @@ menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	clear(&snake_global.body)
 	clear(&snake_global.head_dirs)
 	s := mc.tilemap.start_pos
-	if !mc.tilemap.has_start {
-		s = Vec2{GRID_WIDTH / 2, GRID_HEIGHT / 2}
-	}
 	append(&snake_global.body, s)
 	append(&snake_global.head_dirs, Direction.Right)
 	snake_global.direction = .Right

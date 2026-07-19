@@ -177,8 +177,7 @@ load_tilemap :: proc(path: string) -> Tilemap {
 				has_gate = true
 			} else if ch == 'S' {
 				if has_start {
-					tiles[y][x] = .Grass
-					continue
+					panic("Invalid map: multiple start positions (S)")
 				}
 				tiles[y][x] = .Start
 				start_pos = Vec2{x, y}
@@ -210,17 +209,8 @@ load_tilemap :: proc(path: string) -> Tilemap {
 		}
 	}
 
-	// Normalize any stray Start tiles so only the selected start position renders.
-	for y in 0 ..< height {
-		for x in 0 ..< width {
-			if tiles[y][x] != .Start {
-				continue
-			}
-			pos := Vec2{x, y}
-			if !has_start || pos != start_pos {
-				tiles[y][x] = .Grass
-			}
-		}
+	if !has_start {
+		panic("Invalid map: missing start position (S)")
 	}
 
 	return Tilemap{tiles, width, height, pairs, gate_pos, has_gate, start_pos, has_start}
@@ -285,10 +275,10 @@ puddle_tint :: proc(pair_idx: int) -> raylib.Color {
 		{120, 220, 255, 255},
 		{200, 140, 255, 255},
 		{100, 255, 255, 255},
-		{255, 180, 80, 255},
-		{255, 160, 200, 255},
+		{255, 120, 220, 255},
+		{180, 120, 255, 255},
 		{180, 255, 100, 255},
-		{200, 200, 200, 255},
+		{120, 200, 200, 255},
 	}
 	return palette[pair_idx % len(palette)]
 }
@@ -394,7 +384,7 @@ draw_tilemap :: proc(tm: Tilemap, assets: Assets, remaining: int) {
 					)
 				}
 			case .Start:
-				if tm.has_start && pos == tm.start_pos {
+				if pos == tm.start_pos {
 					raylib.DrawRectangle(
 						c.int(x * CELL_SIZE),
 						c.int(y * CELL_SIZE),
@@ -409,9 +399,21 @@ draw_tilemap :: proc(tm: Tilemap, assets: Assets, remaining: int) {
 						CELL_SIZE,
 						raylib.Color{255, 255, 120, 255},
 					)
+					start_text: cstring = "S"
+					start_fs: c.int = CELL_SIZE / 2
+					tw := raylib.MeasureText(start_text, start_fs)
+					dx := (CELL_SIZE - int(tw)) / 2
+					dy := (CELL_SIZE - int(start_fs)) / 2
+					raylib.DrawText(
+						start_text,
+						c.int(x * CELL_SIZE + dx),
+						c.int(y * CELL_SIZE + dy),
+						start_fs,
+						raylib.Color{60, 60, 20, 255},
+					)
 				} else {
 					raylib.DrawTexture(
-						assets.sprites.grass,
+						assets.sprites.wall,
 						c.int(x * CELL_SIZE),
 						c.int(y * CELL_SIZE),
 						raylib.WHITE,
