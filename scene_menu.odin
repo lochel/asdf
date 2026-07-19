@@ -11,6 +11,9 @@ Menu_Context :: struct {
 	demo_food:      Food,
 	tilemap:        Tilemap,
 	tilemap_loaded: bool,
+	option_focus:   int,
+	mode_single:    bool,
+	selected_level: int,
 	tilemap_actor:  TilemapActor,
 	npc_actor:      NpcSnakeCollectionActor,
 	food_actor:     FoodActor,
@@ -55,6 +58,9 @@ spawn_demo_npc :: proc(m: ^Menu_Context) {
 
 menu_enter :: proc(ctx: ^engine.Scene_Context) {
 	mc := cast(^Menu_Context)ctx
+	mc.option_focus = 0
+	mc.mode_single = start_single_level_mode
+	mc.selected_level = clamp(start_level_index, 0, max(0, len(LEVELS) - 1))
 
 	if mc.tilemap_loaded {
 		unload_tilemap(&mc.tilemap)
@@ -139,7 +145,64 @@ menu_input :: proc(ctx: ^engine.Scene_Context, dt: f32) {
 		engine.close(mc.eng)
 		return
 	}
+
+	if len(LEVELS) == 0 {
+		if rl.IsKeyPressed(.ENTER) || rl.IsKeyPressed(.SPACE) || controller_confirm() {
+			engine.close(mc.eng)
+		}
+		return
+	}
+
+	move_up :=
+		rl.IsKeyPressed(.UP) ||
+		rl.IsKeyPressed(.W) ||
+		gp_button_pressed(.LEFT_FACE_UP, 0) ||
+		joy_button_pressed(11)
+	move_down :=
+		rl.IsKeyPressed(.DOWN) ||
+		rl.IsKeyPressed(.S) ||
+		gp_button_pressed(.LEFT_FACE_DOWN, 0) ||
+		joy_button_pressed(12)
+	move_left :=
+		rl.IsKeyPressed(.LEFT) ||
+		rl.IsKeyPressed(.A) ||
+		gp_button_pressed(.LEFT_FACE_LEFT, 0) ||
+		joy_button_pressed(13)
+	move_right :=
+		rl.IsKeyPressed(.RIGHT) ||
+		rl.IsKeyPressed(.D) ||
+		gp_button_pressed(.LEFT_FACE_RIGHT, 0) ||
+		joy_button_pressed(14)
+	max_focus := 0
+	if mc.mode_single {
+		max_focus = 1
+	}
+
+	if move_up {
+		mc.option_focus = max(0, mc.option_focus - 1)
+	}
+	if move_down {
+		mc.option_focus = min(max_focus, mc.option_focus + 1)
+	}
+
+	if move_left || move_right {
+		if mc.option_focus == 0 {
+			mc.mode_single = !mc.mode_single
+			if !mc.mode_single {
+				mc.option_focus = 0
+			}
+		} else if mc.mode_single {
+			delta := -1
+			if move_right {
+				delta = 1
+			}
+			mc.selected_level = (mc.selected_level + delta + len(LEVELS)) % len(LEVELS)
+		}
+	}
+
 	if rl.IsKeyPressed(.ENTER) || rl.IsKeyPressed(.SPACE) || controller_confirm() {
+		start_single_level_mode = mc.mode_single
+		start_level_index = mc.selected_level
 		engine.switch_scene(mc.eng, engine.getScene(mc.eng, "game"), .Slide_Right, 0.6)
 		return
 	}
@@ -257,8 +320,42 @@ menu_render :: proc(ctx: ^engine.Scene_Context) {
 	tw_title := rl.MeasureText(title, title_size)
 	rl.DrawText(title, (sw - tw_title) / 2, CELL_SIZE * 4, title_size, rl.GREEN)
 
+	opt_fs: c.int = CELL_SIZE / 2 + 6
+	opt_y: c.int = CELL_SIZE * 10
+	opt_x: c.int = sw / 2 - 220
+
+	mode_name: cstring = "Normal (All Levels)"
+	if mc.mode_single {
+		mode_name = "Single Level"
+	}
+	mode_row := rl.TextFormat("Mode: %s", mode_name)
+	mode_col := rl.Color{190, 220, 170, 255}
+	if mc.option_focus == 0 {
+		mode_col = rl.Color{255, 230, 90, 255}
+	}
+	rl.DrawText(mode_row, opt_x, opt_y, opt_fs, mode_col)
+
+	help: cstring = "Use LEFT/RIGHT to change mode"
+	if mc.mode_single {
+		level_row := rl.TextFormat(
+			"Level: %d/%d  (%s)",
+			mc.selected_level + 1,
+			len(LEVELS),
+			LEVELS[mc.selected_level].label,
+		)
+		level_col := rl.Color{140, 170, 130, 255}
+		if mc.option_focus == 1 {
+			level_col = rl.Color{255, 230, 90, 255}
+		}
+		rl.DrawText(level_row, opt_x, opt_y + opt_fs + 12, opt_fs, level_col)
+		help = "Use UP/DOWN to select, LEFT/RIGHT to change"
+	}
+
+	help_w := rl.MeasureText(help, opt_fs - 6)
+	rl.DrawText(help, (sw - help_w) / 2, opt_y + (opt_fs + 12) * 2 + 6, opt_fs - 6, rl.GRAY)
+
 	hint: cstring = "Press SPACE to start"
 	hint_size: c.int = CELL_SIZE
-	hw := rl.MeasureText(hint, hint_size)
-	rl.DrawText(hint, (sw - hw) / 2, sh - CELL_SIZE * 3, hint_size, rl.GREEN)
+	hint_w := rl.MeasureText(hint, hint_size)
+	rl.DrawText(hint, (sw - hint_w) / 2, sh - CELL_SIZE * 3, hint_size, rl.GREEN)
 }

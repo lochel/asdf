@@ -58,14 +58,15 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 		gd.final_score = 0
 		return
 	}
+	start_idx := clamp(start_level_index, 0, len(LEVELS) - 1)
 
-	gd.tilemap = load_tilemap(LEVELS[0].file)
+	gd.tilemap = load_tilemap(LEVELS[start_idx].file)
 	gd.tilemap_loaded = true
 	resize_for_tilemap(gd.tilemap, gd.eng)
 
 	gd.playing = Playing {
 		lives            = 3,
-		current_level    = 0,
+		current_level    = start_idx,
 		apples           = 0,
 		foul_kills       = 0,
 		npc_kills        = 0,
@@ -89,7 +90,7 @@ game_enter :: proc(ctx: ^engine.Scene_Context) {
 	gd.victory = false
 	gd.level_complete = false
 	gd.final_score = 0
-	gd.prev_level = 0
+	gd.prev_level = start_idx
 	clear(&gd.labels)
 
 	gd.tilemap_actor = TilemapActor {
@@ -794,6 +795,25 @@ advance_level :: proc(
 			score      = playing.score,
 		},
 	)
+
+	if start_single_level_mode {
+		for npc in playing.npc_snakes {
+			delete(npc.body)
+			delete(npc.head_dirs)
+			delete(npc.debug_path)
+		}
+		delete(playing.npc_snakes)
+		playing.npc_snakes = nil
+		delete(playing.foul_foods)
+		playing.foul_foods = nil
+		delete(playing.splits_triggered)
+		playing.splits_triggered = {}
+		delete(playing.pending_labels)
+		playing.pending_labels = nil
+		playing.current_level = len(LEVELS)
+		playing.total_score += playing.score
+		return true
+	}
 
 	playing.current_level += 1
 
