@@ -31,6 +31,7 @@ Playing :: struct {
 	foul_apples:      int,
 	gate_extra:       int,
 	paused:           bool,
+	gate_loss_this_step: bool,
 	pending_labels:   [dynamic]PendingLabel,
 	level_stats:      [dynamic]LevelStats,
 	level_just_completed: bool,

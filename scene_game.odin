@@ -215,6 +215,7 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 
 	playing := &gd.playing
 	dt := move_delay
+	playing.gate_loss_this_step = false
 
 	gate_threshold := LEVELS[playing.current_level].gate_score + playing.gate_extra
 	gd.tilemap_actor.remaining = max(0, gate_threshold - playing.apples)
@@ -235,6 +236,18 @@ game_step :: proc(ctx: ^engine.Scene_Context, step: int) -> f32 {
 			gd.victory = true
 		} else {
 			gd.game_over = true
+		}
+		if playing.gate_loss_this_step {
+			for i := len(playing.pending_labels) - 1; i >= 0; i -= 1 {
+				if playing.pending_labels[i].text == "+10" {
+					unordered_remove(&playing.pending_labels, i)
+				}
+			}
+			for i := len(gd.labels) - 1; i >= 0; i -= 1 {
+				if gd.labels[i].text == "+10" {
+					unordered_remove(&gd.labels, i)
+				}
+			}
 		}
 		gd.final_score = playing.total_score + playing.score
 	} else if playing.level_just_completed {
@@ -423,6 +436,7 @@ init_game :: proc(snake: ^Snake, food: ^Food, tm: ^Tilemap) {
 	append(&snake.head_dirs, Direction.Right)
 	snake.direction = .Right
 	snake.next_direction = .Right
+	food^ = {-1, -1}
 }
 
 spawn_food :: proc(snake: ^Snake, food: ^Food, tm: Tilemap, playing: ^Playing) {
@@ -586,6 +600,14 @@ update :: proc(
 
 	}
 
+	npc_kills_before_npc_step := playing.npc_kills
+	score_before_npc_step := playing.score
+	pending_labels_before_npc_step := make([dynamic]PendingLabel)
+	defer delete(pending_labels_before_npc_step)
+	for pl in playing.pending_labels {
+		append(&pending_labels_before_npc_step, pl)
+	}
+
 	{
 		i := 0
 		for i < len(playing.npc_snakes) {
@@ -628,6 +650,13 @@ update :: proc(
 			}
 
 			if playing.gate_open && npc_head == tm.gate_pos {
+				playing.npc_kills = npc_kills_before_npc_step
+				playing.score = score_before_npc_step
+				clear(&playing.pending_labels)
+				for pl in pending_labels_before_npc_step {
+					append(&playing.pending_labels, pl)
+				}
+				playing.gate_loss_this_step = true
 				return player_died(snake, food, playing, assets, tm)
 			}
 
@@ -1464,6 +1493,7 @@ draw_npc_snake :: proc(npc: NpcSnake, assets: Assets) {
 }
 
 draw_food :: proc(food: Food, assets: Assets) {
+	if food.x < 0 || food.y < 0 do return
 	rl.DrawTexture(
 		assets.sprites.apple,
 		c.int(food.x * CELL_SIZE),
